@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Chatbot Quản lý Kỹ thuật EVNNPC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        /* Font and Colors */
+        :root { 
+            --evn-blue: #005BAC;
+            --evn-red: #E30613; 
+            --text-color: #1f2937;
+            --green-correct: #38a169; /* Tailwind green-600 */
+            --red-incorrect: #e53e3e; /* Tailwind red-600 */
+        }
+        body { 
+            font-family: 'Inter', sans-serif;
+            background: #f3f6fa; 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            justify-content: center;
+        }
+        /* Main Container */
+        .chatbot { 
+            width: 100%;
+            max-width: 900px; 
+            background: #fff; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 40px rgba(2,6,23,0.15); 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+            min-height: 700px;
+        }
+        /* Header */
+        .header { 
+            background: linear-gradient(90deg, var(--evn-blue), #004b8a);
+            color: #fff; 
+            padding: 24px; 
+            text-align: center; 
+            position: relative; 
+        }
+        .header h1 { 
+            font-size: 1.8rem;
+            font-weight: 700; 
+            margin: 0;
+        }
+        .header p { 
+            font-size: 1rem;
+            margin: 4px 0 0; 
+            opacity: 0.9;
+        }
+        /* Chat Body */
+        .chat-messages { 
+            flex-grow: 1;
+            padding: 20px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            background: #fcfcfc;
+        }
+        .message-bubble { 
+            max-width: 85%;
+            padding: 12px 16px; 
+            border-radius: 18px; 
+            font-size: 0.95rem; 
+            line-height: 1.5;
+        }
+        .user-message { 
+            background: #e0f2fe; /* Light Blue */
+            color: var(--text-color); 
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .bot-message { 
+            background: #fff;
+            color: var(--text-color); 
+            align-self: flex-start; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+            border: 1px solid #e5e7eb; 
+            border-bottom-left-radius: 4px;
+        }
+        /* Actions/Quick links */
+        .quick-actions { 
+            display: flex;
+            flex-wrap: wrap; 
+            gap: 10px; 
+            margin-top: 10px; 
+            padding: 10px 0;
+        }
+        .quick-action-btn { 
+            padding: 8px 15px;
+            border-radius: 9999px; 
+            font-size: 0.85rem; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: background-color 0.2s;
+            border: 1px solid var(--evn-blue);
+            color: var(--evn-blue);
+            background: #fff;
+        }
+        .quick-action-btn:hover { 
+            background: #f0f4ff;
+        }
+        /* Footer */
+        .chat-input { 
+            padding: 15px 20px;
+            border-top: 1px solid #e5e7eb; 
+            background: #fff;
+        }
+        .input-container { 
+            display: flex;
+            gap: 10px;
+        }
+        .input-container input { 
+            flex-grow: 1;
+            padding: 12px 15px; 
+            border: 1px solid #d1d5db; 
+            border-radius: 12px; 
+            outline: none; 
+            font-size: 1rem; 
+            transition: border-color 0.2s;
+        }
+        .input-container input:focus { 
+            border-color: var(--evn-blue);
+        }
+        .input-container button { 
+            background: var(--evn-blue);
+            color: #fff; 
+            padding: 12px 20px; 
+            border-radius: 12px; 
+            border: none; 
+            cursor: pointer; 
+            transition: background-color 0.2s;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+        }
+        .input-container button:hover { 
+            background: #004b8a;
+        }
+        .source { 
+            margin-top: 10px;
+            padding: 10px; 
+            background: #f9fafb; 
+            border-left: 3px solid var(--evn-red); 
+            font-size: 0.85rem; 
+            color: #4b5563;
+        }
+        /* Modal for Quiz and Quick Learn */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 25px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #4b5563;
+        }
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--evn-blue);
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+        }
+        /* Quiz Styles */
+        .quiz-question {
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #fcfcfc;
+        }
+        .question-text {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
+        .quiz-option {
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .quiz-option:hover:not(.disabled) {
+            background-color: #e0f2fe;
+            border-color: var(--evn-blue);
+        }
+        .quiz-option.correct {
+            background-color: #d1fae5; /* Light Green */
+            border-color: var(--green-correct);
+            font-weight: 600;
+            pointer-events: none;
+        }
+        .quiz-option.incorrect {
+            background-color: #fee2e2; /* Light Red */
+            border-color: var(--red-incorrect);
+            font-weight: 600;
+            pointer-events: none;
+        }
+        .quiz-option.incorrect .option-label {
+            text-decoration: line-through;
+            color: #991b1b;
+        }
+        .option-icon {
+            font-size: 1rem;
+            width: 20px;
+            text-align: center;
+        }
+        .result-summary {
+            text-align: center;
+            padding: 20px;
+            border: 2px solid var(--evn-blue);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            background: #e0f2fe;
+        }
+        .result-summary h3 {
+            font-size: 1.5rem;
+            color: var(--evn-blue);
+            margin-bottom: 10px;
+        }
+        .result-summary p {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .explanation {
+            margin-top: 5px;
+            padding: 8px 10px;
+            font-size: 0.9rem;
+            color: #1f2937;
+            background: #f0fdf4;
+            border-left: 3px solid var(--green-correct);
+        }
+        /* Quick Learn Styles */
+        .qa-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .qa-item:hover {
+            background-color: #f7f7f7;
+        }
+        .qa-question {
+            font-weight: 700;
+            color: var(--evn-blue);
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+        }
+        .qa-toggle-icon {
+            margin-right: 10px;
+            color: var(--evn-red);
+        }
+        .qa-answer-container {
+            margin-top: 10px;
+            padding-left: 25px;
+            border-left: 3px solid var(--evn-red);
+            font-style: italic;
+            color: #374151;
+            max-height: 0; /* Hidden by default */
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .qa-answer-container.active {
+            max-height: 500px; /* Adjust based on max answer length */
+            transition: max-height 0.5s ease-in;
+        }
+        .qa-source {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 5px;
+            font-style: normal;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="chatbot">
+        <div class="header">
+            <h1>🤖 Chatbot Quản lý Kỹ thuật EVNNPC</h1>
+            <p>Bản quyền © 2025 by Phạm Hồng Long & Brown Eyes</p>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+            <div class="message-bubble bot-message">
+                Chào bạn! Tôi là trợ lý ảo về Quản lý Kỹ thuật, phiên bản nâng cấp!
+                <br>Tôi đã sẵn sàng với kho dữ liệu **hơn 800 câu hỏi** và chế độ **Học Nhanh** toàn diện!
+                <div class="quick-actions">
+                    <button class="quick-action-btn" onclick="showWelcomeMessage()">Bắt đầu trò chuyện</button>
+                    <button class="quick-action-btn" onclick="openQuickLearnModal()">Học Nhanh (Toàn bộ 800+)</button>
+                    <button class="quick-action-btn" onclick="openQuizSelectionModal()">Thi trắc nghiệm</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-input">
+            <div class="input-container">
+                <input type="text" id="user-input" placeholder="Nhập câu hỏi của bạn..." disabled>
+                <button id="send-btn" onclick="sendMessage()" disabled>
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2 id="modal-title" class="modal-title"></h2>
+            <div id="modal-body">
+            </div>
+            <div id="quiz-footer" class="mt-4 hidden">
+                <button class="quick-action-btn" style="background: var(--evn-red); color: white; border: none; padding: 10px 20px; border-radius: 8px;" onclick="finishQuiz()">
+                    <i class="fas fa-check-circle mr-2"></i> KẾT THÚC BÀI THI
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const qaData = [
+            // --- BỘ CÂU HỎI GỐC ---
+            { q: "Mục tiêu quản lý kỹ thuật của EVN là gì?", a: "Đảm bảo cung cấp điện an toàn, ổn định, chất lượng và kinh tế; tuân thủ quy định pháp luật; nâng cao hiệu quả vận hành hệ thống điện.", sources: ['Điều 2, QĐ 905'] },
+            { q: "Định kỳ mấy lần/năm, EVN thực hiện đánh giá công tác QLKT đối với các Đơn vị trực thuộc?", a: "EVN thực hiện đánh giá công tác QLKT đối với các Đơn vị trực thuộc **02 lần/năm** (6 tháng và cả năm).", sources: ['Điều 84, QĐ 905'] },
+            { q: "Việc sửa chữa lớn (SCL) tài sản cố định được thực hiện theo nguyên tắc nào?", a: "Nguyên tắc SCL: **Đúng nội dung, đúng tiến độ, đảm bảo chất lượng và tuân thủ các quy định hiện hành**.", sources: ['Điều 45, QĐ 905'] },
+            { q: "Mức độ nghiêm trọng của sự cố trong Tổng công ty Điện lực miền Bắc được phân thành mấy cấp?", a: "Sự cố trong EVNNPC được phân thành **04 cấp**: Sự cố cấp 1 (nghiêm trọng), cấp 2 (trung bình), cấp 3 (nhẹ) và sự cố cấp 4 (thông thường).", sources: ['Điều 4, QĐ 1515'] },
+            { q: "Sau khi sự cố xảy ra, Đơn vị QLVH phải thu thập những thông tin cơ bản nào?", a: "Các thông tin cơ bản cần thu thập: **Thời điểm xảy ra, tình hình vận hành trước sự cố, chế độ kết dây, và các thông tin bảo vệ/ghi sự kiện liên quan**.", sources: ['Điều 14, QĐ 1515'] },
+            { q: "Thời gian tối đa để bắt đầu khắc phục hư hỏng trong thời gian bảo hành SCL đối với Đơn vị sửa chữa trong nước là bao lâu?", a: "Thời gian tối đa là **07 ngày** kể từ ngày phát hành văn bản yêu cầu.", sources: ['Điều 53, QĐ 905'] },
+            { q: "Đại tu tài sản cố định được định nghĩa như thế nào?", a: "Đại tu là công việc bảo dưỡng, sửa chữa định kỳ tổng thể toàn bộ các bộ phận của thiết bị, công trình nhằm **khôi phục đặc tính kỹ thuật ban đầu, kéo dài tuổi thọ, và nâng cao hiệu suất**.", sources: ['Khoản 15, Điều 2, QĐ 905'] },
+            { q: "Thời gian thống kê tổn thất điện năng trên lưới điện 110kV, 220kV, 500kV là theo chu kỳ nào?", a: "Thống kê theo chu kỳ **hàng tháng** và **cả năm**.", sources: ['Điều 13, QĐ 905'] },
+            { q: "Chỉ số SAIDI trong QLKT dùng để đánh giá điều gì?", a: "SAIDI (System Average Interruption Duration Index) là chỉ số đánh giá **thời gian mất điện trung bình** của lưới điện phân phối.", sources: ['Điều 21, QĐ 905'] },
+            { q: "Chỉ số MAIFI trong QLKT dùng để đánh giá điều gì?", a: "MAIFI (Momentary Average Interruption Frequency Index) là chỉ số về **số lần mất điện thoáng qua trung bình** của lưới điện phân phối.", sources: ['Điều 23, QĐ 905'] },
+            { q: "Việc thu hồi vật tư thiết bị hư hỏng sau SCL được quy định như thế nào?", a: "Vật tư hư hỏng phải được thu hồi **ngay** và bàn giao cho kho vật tư của Đơn vị theo quy trình quản lý vật tư.", sources: ['Điều 33, QĐ 905'] },
+            { q: "Trách nhiệm chính của nhân viên QLVH đường dây trung áp là gì?", a: "Có trách nhiệm **kiểm tra, theo dõi tình trạng thiết bị, phát hiện và xử lý kịp thời các tồn tại, đảm bảo đường dây vận hành an toàn, liên tục**.", sources: ['Điều 4, Quy trình ĐZTA'] },
+            { q: "Các Công ty Điện lực phải ban hành định mức vật tư dự phòng phục vụ QLVH dựa trên tiêu chí nào?", a: "Dựa trên **quy mô lưới điện** và **thực tế QLVH** của từng đơn vị, nhằm đáp ứng yêu cầu sản xuất và tối ưu sử dụng vốn.", sources: ['Điều 25, Quy trình ĐZTA'] },
+            { q: "Định kỳ Trung tu đối với máy biến áp được thực hiện khi nào?", a: "Trung tu được thực hiện khi hết **chu kỳ bảo dưỡng định kỳ** hoặc khi kết quả phân tích, đánh giá tình trạng thiết bị cho thấy cần thiết.", sources: ['Điều 45, QĐ 905'] },
+            { q: "Khi nào thì Hội đồng nghiệm thu cấp cơ sở có quyền từ chối nghiệm thu công việc SCL?", a: "Khi **nội dung, khối lượng công việc chưa thực hiện đầy đủ** theo dự toán/phương án kỹ thuật được duyệt hoặc **chất lượng không đạt** yêu cầu kỹ thuật.", sources: ['Điều 57, QĐ 905'] },
+            { q: "Yêu cầu về kiểm tra và bảo dưỡng các thiết bị đo lường trong TBA phân phối?", a: "Các thiết bị đo lường phải được **kiểm tra định kỳ và hiệu chuẩn** theo quy định của pháp luật và EVN để đảm bảo độ chính xác.", sources: ['Điều 45, Quy trình TBA PP'] },
+            { q: "Yêu cầu về bản vẽ hoàn công và hồ sơ kỹ thuật của tuyến cáp ngầm?", a: "Phải có **bản vẽ hoàn công chính xác** thể hiện **vị trí, độ sâu, loại cáp, mối nối**, và được **lưu trữ đầy đủ** để phục vụ QLVH.", sources: ['Điều 5, Quy trình Cáp Ngầm'] },
+            { q: "Việc lắp đặt các thiết bị cảnh báo nhiệt độ, độ ẩm trong mương cáp có mục đích gì?", a: "Nhằm **giám sát môi trường** xung quanh cáp, cảnh báo sớm các nguy cơ gây hỏng hóc hoặc quá tải cáp.", sources: ['Điều 15, Quy trình Cáp Ngầm'] },
+            { q: "Tần suất thí nghiệm định kỳ Cáp ngầm trung áp được quy định như thế nào?", a: "Thường là **05 năm/lần** hoặc theo quy định cụ thể của EVN và nhà sản xuất.", sources: ['Điều 35, Quy trình Cáp Ngầm'] },
+            { q: "Đơn vị có phải lập hồ sơ quản lý kỹ thuật cho các thiết bị chính không?", a: "Có. Tất cả thiết bị chính đều phải có **hồ sơ quản lý kỹ thuật** bao gồm lý lịch, hồ sơ thiết kế, lắp đặt, vận hành, sửa chữa, thí nghiệm.", sources: ['Điều 18, QĐ 905'] },
+            { q: "Hồ sơ quản lý kỹ thuật của thiết bị được lưu trữ dưới hình thức nào?", a: "Có thể lưu trữ dưới **dạng văn bản (hồ sơ giấy)** hoặc **dạng điện tử (trên phần mềm)**.", sources: ['Điều 18, QĐ 905'] },
+            { q: "Công tác bảo trì lưới điện được phân loại thành các hình thức nào?", a: "Bao gồm: **Bảo trì dự phòng theo thời gian (Time-based maintenance - TBM)** và **Bảo trì dựa trên tình trạng (Condition-based maintenance - CBM)**.", sources: ['Điều 36, QĐ 905'] },
+            { q: "Khi thực hiện CBM, việc giám sát thiết bị được thực hiện bằng cách nào?", a: "Thực hiện bằng cách **phân tích dầu MBA, đo phóng điện cục bộ, đo nhiệt độ hồng ngoại, và các phương pháp thí nghiệm chẩn đoán khác**.", sources: ['Điều 39, QĐ 905'] },
+            { q: "Yêu cầu về chất lượng thi công Sửa chữa Lớn (SCL) là gì?", a: "Phải đảm bảo **đúng tiêu chuẩn kỹ thuật**, **sử dụng vật tư đạt chất lượng**, và **đạt các thông số vận hành** sau khi hoàn thành.", sources: ['Điều 50, QĐ 905'] },
+            { q: "Nội dung công tác Quản lý Kỹ thuật bao gồm những lĩnh vực chính nào?", a: "Bao gồm: Quản lý thiết bị, Quản lý vận hành, Quản lý bảo trì và sửa chữa, Quản lý vật tư kỹ thuật, và Quản lý tổn thất điện năng.", sources: ['Điều 3, QĐ 905'] },
+            { q: "Trách nhiệm của Trưởng Ban Kỹ thuật EVNNPC trong công tác QLKT là gì?", a: "Tham mưu cho Tổng Giám đốc về các **quy trình, tiêu chuẩn kỹ thuật**, **tổ chức kiểm tra, đánh giá** công tác QLKT của các đơn vị trực thuộc.", sources: ['Điều 8, QĐ 905'] },
+            { q: "Định kỳ thí nghiệm định kỳ đối với rơ le bảo vệ, tự động có tần suất là bao nhiêu?", a: "Tần suất là **03 năm/lần** đối với rơ le cơ và **04-05 năm/lần** đối với rơ le kỹ thuật số.", sources: ['Quy trình Thí nghiệm ĐL'] },
+            { q: "Yêu cầu về việc kiểm tra định kỳ bằng camera nhiệt (Hồng ngoại) đối với các tiếp xúc điện?", a: "Phải thực hiện tối thiểu **02 lần/năm** (trước và sau mùa nắng nóng) tại các điểm tiếp xúc quan trọng.", sources: ['Quy định kiểm tra nhiệt'] },
+            { q: "Khi MBA vận hành ở chế độ quá tải trong trường hợp đặc biệt, phải tuân thủ giới hạn nào?", a: "Phải tuân thủ giới hạn về **nhiệt độ dầu, nhiệt độ cuộn dây** và **thời gian quá tải** cho phép theo tài liệu nhà sản xuất.", sources: ['Điều 7, Quy trình TBA PP'] },
+            { q: "Quy trình điều tra sự cố yêu cầu phải thu thập các bản ghi nào liên quan đến sự cố?", a: "Phải thu thập **Bản ghi sự kiện, ghi sự cố, ghi dao động** và **ghi định vị sự cố** (nếu có) từ các thiết bị tại trạm.", sources: ['Điều 14, QĐ 1515'] },
+            { q: "Trong TBA, việc kiểm tra định kỳ được thực hiện với tần suất tối thiểu bao nhiêu lần/quý?", a: "Đối với TBA Phân phối quan trọng là **01 lần/tháng**, TBA còn lại là **01 lần/quý**.", sources: ['Điều 22, QĐ 905 (Tham chiếu)'] },
+            { q: "Đại tu tài sản cố định được định nghĩa như thế nào?", a: "Là bảo dưỡng, sửa chữa định kỳ tổng thể toàn bộ các bộ phận nhằm **khôi phục đặc tính kỹ thuật ban đầu, kéo dài tuổi thọ**.", sources: ['Khoản 15, Điều 2, QĐ 905'] },
+            { q: "Nguyên tắc xây dựng kế hoạch SCL là gì?", a: "Dựa trên **tình trạng thực tế** của thiết bị (CBM), **tuổi thọ thiết kế**, và **các quy định, quy trình** hiện hành.", sources: ['Điều 45, QĐ 905'] },
+            { q: "Trong quy trình QLKT, khái niệm 'Tài sản cố định kỹ thuật chuyên ngành điện' bao gồm những gì?", a: "Bao gồm **Thiết bị nguồn, Lưới điện, Thiết bị đo đếm, Thiết bị bảo vệ/điều khiển** và **Công trình xây dựng gắn liền với thiết bị**.", sources: ['Khoản 12, Điều 2, QĐ 905'] },
+            { q: "Khoảng cách an toàn phóng điện ngang (D1) từ dây dẫn đến cây xanh đối với lưới điện 22kV là bao nhiêu?", a: "Khoảng cách an toàn phóng điện ngang (D1) đối với lưới 22kV là **2.0 m**.", sources: ['Phụ lục, Quy trình ĐZTA'] },
+            { q: "Tần suất tối thiểu của công tác kiểm tra định kỳ Đường dây trung áp là bao nhiêu?", a: "Tần suất tối thiểu là **01 lần/quý**.", sources: ['Điều 18, Quy trình ĐZTA'] },
+            { q: "Khi kiểm tra định kỳ đường dây, Nhân viên QLVH cần kiểm tra những nội dung chính nào trên cột thép?", a: "Kiểm tra **tình trạng móng, thân cột (rỉ sét, biến dạng), bulông, dấu hiệu lún, nghiêng**.", sources: ['Điều 21, Quy trình ĐZTA'] },
+            { q: "Yêu cầu kỹ thuật đối với mối nối dây dẫn trên đường dây trung áp là gì?", a: "Mối nối phải cách khóa đỡ tối thiểu **1.2 m** và không được có **hai mối nối trên cùng một khoảng cột**.", sources: ['Điều 70, Quy trình ĐZTA'] },
+            { q: "Phải làm gì khi phát hiện cột điện bị lún, nghiêng hoặc có nguy cơ đổ?", a: "Phải **báo cáo ngay** và **thực hiện các biện pháp khẩn cấp** như lắp thêm dây néo tạm, gia cố chân cột để ngăn ngừa sự cố.", sources: ['Điều 8, Quy trình ĐZTA'] },
+            { q: "Tiêu chuẩn về nhiệt độ làm việc giới hạn của dây dẫn trên đường dây trung áp là bao nhiêu?", a: "Nhiệt độ giới hạn cho phép của dây dẫn không được vượt quá **70°C**.", sources: ['Điều 11, Quy trình ĐZTA'] },
+            { q: "Công tác bảo dưỡng dây néo cột bao gồm những nội dung gì?", a: "Bảo dưỡng dây néo bao gồm: **Kiểm tra độ căng, tình trạng chống sét van (nếu có), tình trạng bulông, và sơn chống rỉ các chi tiết kim loại**.", sources: ['Điều 66, Quy trình ĐZTA'] },
+            { q: "Khi sửa chữa đứt dây tại khóa néo, nếu dây bị ngắn thì phải làm gì để giữ độ võng không đổi?", a: "Phải dùng **thanh nối trung gian** và **điều chỉnh độ dài của thanh này**.", sources: ['Điều 71, Quy trình ĐZTA'] },
+            { q: "Biện pháp tăng cường bảo vệ cột điện được quy định như thế nào?", a: "Bao gồm việc **làm hàng rào, trồng cây bảo vệ, cắm biển báo cấm leo trèo, và xử lý ngay các dấu hiệu xâm hại móng cột**.", sources: ['Điều 8, Quy trình ĐZTA'] },
+            { q: "Khi kiểm tra cách điện trên đường dây, nếu phát hiện sứ bị vỡ, rạn nứt thì phải xử lý thế nào?", a: "Phải **thay thế ngay** bằng sứ cùng chủng loại, điện áp định mức và tuân thủ quy trình thay thế cách điện.", sources: ['Điều 36, Quy trình ĐZTA'] },
+            { q: "Yêu cầu về ghi chép sổ sách vận hành đường dây trung áp?", a: "Mọi công việc kiểm tra, thao tác, xử lý tồn tại phải được **ghi chép đầy đủ, chính xác** vào sổ sách hoặc phần mềm quản lý vận hành theo quy định.", sources: ['Điều 5, Quy trình ĐZTA'] },
+            { q: "Cấu tạo của cột thép phải đảm bảo yêu cầu nào để chống leo trèo?", a: "Phải lắp đặt các **vật chống leo trèo** (dây thép gai hoặc tấm chắn) ở độ cao thích hợp theo quy định.", sources: ['Điều 9, Quy trình ĐZTA'] },
+            { q: "Trường hợp nào thì cần phải kiểm tra bất thường đường dây trung áp?", a: "Khi có **gió bão lớn, sương muối, sét đánh, phát hiện sự cố gần đó, hoặc có cảnh báo từ hệ thống giám sát**.", sources: ['Điều 19, Quy trình ĐZTA'] },
+            { q: "Khi nào cần căng lại dây dẫn trên một khoảng néo?", a: "Cần căng lại dây khi **độ võng vượt quá giới hạn cho phép** hoặc sau khi **thay thế, sửa chữa dây dẫn**.", sources: ['Điều 72, Quy trình ĐZTA'] },
+            { q: "Việc sơn chống sét và chống rỉ cho cột thép cần tuân thủ quy định nào?", a: "Phải sử dụng loại **sơn chuyên dụng**, đảm bảo **độ dày và số lớp sơn** theo quy định kỹ thuật, và phải **cạo rỉ sạch sẽ** trước khi sơn lớp mới.", sources: ['Điều 60, Quy trình ĐZTA'] },
+            { q: "Khoảng cách an toàn phóng điện dọc (D2) từ dây dẫn đến mặt đất đối với lưới điện 35kV là bao nhiêu?", a: "Khoảng cách an toàn phóng điện dọc (D2) đối với lưới 35kV là **4.5 m**.", sources: ['Phụ lục, Quy trình ĐZTA'] },
+            { q: "Kiểm tra định kỳ đường dây trung áp cần kiểm tra trạng thái của chống sét van (LA)?", a: "Cần kiểm tra **tình trạng thân LA (sứ, vỏ polyme), tình trạng tiếp xúc, và dây tiếp địa**.", sources: ['Điều 21, Quy trình ĐZTA'] },
+            { q: "Khi nào cần phải cắt bỏ cây xanh ngoài hành lang an toàn lưới điện?", a: "Khi cây có **nguy cơ đổ, gãy, chạm vào dây dẫn** hoặc **vi phạm khoảng cách an toàn** trong điều kiện gió bão.", sources: ['Điều 25, Quy trình ĐZTA'] },
+            { q: "Yêu cầu kỹ thuật đối với việc lắp đặt bu lông trên cột điện là gì?", a: "Bu lông phải được **siết chặt đúng lực**, **đủ đai ốc** và có **long đền vênh, long đền phẳng** đầy đủ.", sources: ['Điều 62, Quy trình ĐZTA'] },
+            { q: "Mối nối ép thủy lực trên dây dẫn phải đảm bảo các yêu cầu nào?", a: "Phải ép **đúng số lượng, đúng vị trí**, và **sử dụng khuôn ép phù hợp** với tiết diện dây.", sources: ['Điều 70, Quy trình ĐZTA'] },
+            { q: "Nhiệt độ làm việc giới hạn của MBA phân phối được quy định là bao nhiêu?", a: "Nhiệt độ dầu trên MBA không được vượt quá **95°C** (tại lớp trên cùng), và nhiệt độ cuộn dây không vượt quá **98°C**.", sources: ['Điều 4, Quy trình TBA PP'] },
+            { q: "Khi kiểm tra bất thường TBA Phân phối, Nhân viên QLVH cần chú ý đến chi tiết nào của máy cắt/cầu dao?", a: "Cần kiểm tra **vị trí đóng/cắt, tình trạng tiếp xúc, tiếng ồn, nhiệt độ (dùng súng đo nhiệt), và áp suất khí/dầu** (nếu có).", sources: ['Điều 11, Quy trình TBA PP'] },
+            { q: "Tần suất tối thiểu kiểm tra định kỳ TBA Phân phối là bao nhiêu?", a: "TBA quan trọng: **01 lần/tháng**. TBA còn lại: **01 lần/quý**.", sources: ['Điều 22, QĐ 905 (Tham chiếu)'] },
+            { q: "Yêu cầu về quá tải đối với MBA phân phối là gì?", a: "MBA phải vận hành ở chế độ định mức. **Chỉ được quá tải trong trường hợp đặc biệt** và tuân thủ giới hạn cho phép theo tiêu chuẩn hoặc tài liệu nhà sản xuất.", sources: ['Điều 6, 7, Quy trình TBA PP'] },
+            { q: "Nếu phát hiện rò rỉ dầu ở MBA, Nhân viên QLVH phải làm gì?", a: "Phải **báo cáo ngay** và **thực hiện các biện pháp tạm thời** như chèn, đắp để hạn chế dầu chảy ra môi trường, sau đó lập kế hoạch sửa chữa.", sources: ['Điều 16, Quy trình TBA PP'] },
+            { q: "Dòng điện qua điểm trung tính phía hạ áp của MBA phân phối có giới hạn không?", a: "Dòng điện qua điểm trung tính phía hạ áp phải đảm bảo **không vượt quá 25% dòng điện định mức** của cuộn dây hạ áp.", sources: ['Điều 8, Quy trình TBA PP'] },
+            { q: "Công tác bảo dưỡng thường xuyên MBA phân phối bao gồm những việc gì?", a: "Bao gồm **vệ sinh sứ cách điện, thùng dầu, kiểm tra đồng hồ đo, hệ thống tiếp địa và sơn sửa chống rỉ**.", sources: ['Điều 36, Quy trình TBA PP'] },
+            { q: "Phải làm gì khi hệ thống bảo vệ MBA (Relay, Rơ le) tác động cắt sự cố?", a: "Phải **ghi lại các thông số và cờ chỉ thị**, **kiểm tra tình trạng thiết bị**, và **chỉ được phép đóng điện trở lại theo lệnh điều độ và sau khi xác định/khắc phục nguyên nhân**.", sources: ['Điều 13, Quy trình TBA PP'] },
+            { q: "Tình trạng phóng điện trên sứ cách điện MBA thường được phát hiện qua dấu hiệu nào?", a: "Phát hiện qua **tiếng kêu lách tách**, **ánh sáng tím mờ (quang điện)** vào ban đêm, hoặc **vết cháy sém/bám bẩn** trên bề mặt sứ.", sources: ['Điều 11, Quy trình TBA PP'] },
+            { q: "Công tác bảo dưỡng máy cắt tại Trạm Cắt bao gồm những gì?", a: "Bao gồm kiểm tra **tình trạng cơ khí (lò xo, cơ cấu truyền động), mức dầu/áp suất khí, độ mòn tiếp điểm, và các mạch điều khiển/bảo vệ**.", sources: ['Điều 38, Quy trình TBA PP'] },
+            { q: "Yêu cầu về hàng rào và biển báo an toàn tại TBA Phân phối?", a: "Phải có **hàng rào chắc chắn, khóa an toàn** và lắp đặt **đầy đủ các loại biển báo an toàn, biển cấm** theo quy định hiện hành.", sources: ['Điều 9, Quy trình TBA PP'] },
+            { q: "Khi nhiệt độ MBA vượt quá giới hạn, nhân viên QLVH phải làm gì?", a: "Phải **báo cáo ngay** cấp điều độ, **theo dõi chặt chẽ** và **thực hiện các biện pháp giảm tải hoặc cắt điện** theo chỉ đạo.", sources: ['Điều 10, Quy trình TBA PP'] },
+            { q: "Việc kiểm tra tình trạng tiếp địa của TBA Phân phối có tần suất như thế nào?", a: "Kiểm tra bằng mắt thường định kỳ (theo tần suất QLVH), và **đo điện trở tiếp địa định kỳ** (thường là 01 lần/năm hoặc theo chu kỳ thí nghiệm).", sources: ['Điều 40, Quy trình TBA PP'] },
+            { q: "Mục đích của việc kiểm tra hệ thống thông gió tại TBA Phân phối trong nhà?", a: "Đảm bảo **nhiệt độ môi trường** trong TBA luôn nằm trong giới hạn cho phép, tránh làm tăng nhiệt độ vận hành của MBA và thiết bị.", sources: ['Điều 18, Quy trình TBA PP'] },
+            { q: "Yêu cầu đối với điện áp làm việc cho phép của MBA phân phối?", a: "Điện áp vận hành không được vượt quá **±5%** điện áp định mức và **không vượt quá 1,1 lần** điện áp định mức ở chế độ không tải.", sources: ['Điều 5, Quy trình TBA PP'] },
+            { q: "Khi thay thế sứ, cầu chì, Nhân viên QLVH phải đảm bảo nguyên tắc nào?", a: "Phải thay thế bằng thiết bị **cùng chủng loại, cùng cấp điện áp**, và đảm bảo **đúng quy trình an toàn điện**.", sources: ['Điều 36, Quy trình TBA PP'] },
+            { q: "Công tác bảo dưỡng thường xuyên đối với Dao cách ly (DCL) trong TBA?", a: "Bao gồm **vệ sinh sứ cách điện, kiểm tra tình trạng tiếp xúc**, và **bôi trơn cơ cấu truyền động**.", sources: ['Điều 38, Quy trình TBA PP'] },
+            { q: "Nếu phát hiện bất thường về tiếng ồn hoặc rung động của MBA, cần làm gì?", a: "Phải **xác định nguyên nhân** (lỏng bu lông, quá tải, hoặc phóng điện) và **báo cáo ngay** để có biện pháp xử lý.", sources: ['Điều 11, Quy trình TBA PP'] },
+            { q: "Trách nhiệm của Trưởng ca vận hành (hoặc người được ủy quyền) khi xảy ra sự cố TBA?", a: "Phải **chỉ huy xử lý sự cố tại chỗ**, **báo cáo kịp thời** cấp điều độ, và **ghi chép đầy đủ** diễn biến sự cố.", sources: ['Điều 13, Quy trình TBA PP'] },
+            { q: "Yêu cầu đối với Nhân viên QLVH TBA Trung gian KNT là gì?", a: "Phải là người **được đào tạo, có chứng chỉ, nắm vững quy trình** và **có trách nhiệm cao** trong việc giám sát, kiểm tra vận hành từ xa.", sources: ['Điều 8, Quy trình TBA KNT'] },
+            { q: "Trong TBA KNT, việc kiểm tra bằng mắt thường các thiết bị chính được thực hiện như thế nào?", a: "Chủ yếu qua **camera giám sát**, **hệ thống SCADA** và **đi kiểm tra định kỳ** theo lịch được duyệt.", sources: ['Điều 10, Quy trình TBA KNT'] },
+            { q: "Tần suất tối thiểu kiểm tra định kỳ TBA Trung gian KNT là bao nhiêu?", a: "Kiểm tra định kỳ thường xuyên **01 lần/tháng** hoặc theo quy định cụ thể của Đơn vị.", sources: ['Điều 10, Quy trình TBA KNT'] },
+            { q: "Khi có cảnh báo về quá nhiệt tại TBA KNT, Nhân viên QLVH phải làm gì đầu tiên?", a: "Phải **kiểm tra ngay** thông qua hệ thống giám sát và **xác định vị trí, nguyên nhân** cảnh báo để báo cáo và xử lý.", sources: ['Điều 12, Quy trình TBA KNT'] },
+            { q: "Các yêu cầu về vận hành Recloser, LBS/LBS-RMU trong TBA KNT?", a: "Các thiết bị này phải được **kết nối, cài đặt và giám sát từ xa** qua hệ thống RTĐ, đảm bảo khả năng thao tác và tự động hóa.", sources: ['Điều 9, Quy trình TBA KNT'] },
+            { q: "Các thông số vận hành nào của MBA trong TBA KNT cần được giám sát liên tục qua SCADA?", a: "Các thông số: **Điện áp, Dòng điện, Công suất, Nhiệt độ dầu/cuộn dây, và Vị trí nấc phân áp** (OLTC).", sources: ['Điều 11, Quy trình TBA KNT'] },
+            { q: "Mục đích của việc kiểm tra trạng thái dầu của máy cắt (MC) tại TBA KNT?", a: "Đảm bảo **mức dầu nằm trong giới hạn cho phép** và **không có dấu hiệu rò rỉ** hoặc **bất thường** nào.", sources: ['Điều 14, Quy trình TBA KNT'] },
+            { q: "Khi phát hiện bất thường qua camera giám sát tại TBA KNT, Nhân viên QLVH cần làm gì?", a: "Cần **chụp ảnh/ghi hình** làm bằng chứng, **báo cáo ngay** và **lên phương án kiểm tra trực tiếp** nếu cần thiết.", sources: ['Điều 10, Quy trình TBA KNT'] },
+            { q: "Việc kiểm tra hệ thống phòng cháy chữa cháy (PCCC) trong TBA KNT có yêu cầu gì?", a: "Hệ thống PCCC phải được **kiểm tra định kỳ**, đảm bảo **thiết bị hoạt động tốt** và **đủ số lượng bình chữa cháy** theo quy định.", sources: ['Điều 17, Quy trình TBA KNT'] },
+            { q: "Công tác bảo dưỡng các thiết bị Nhị thứ (Rơle, SCADA) trong TBA KNT được thực hiện như thế nào?", a: "Phải **kiểm tra, hiệu chỉnh, và thí nghiệm định kỳ** theo quy trình của nhà sản xuất và quy định của EVN.", sources: ['Điều 25, Quy trình TBA KNT'] },
+            { q: "Trách nhiệm của Nhân viên QLVH khi thực hiện thao tác từ xa qua RTĐ trong TBA KNT?", a: "Phải **kiểm tra lại trạng thái thiết bị** sau thao tác, **ghi chép đầy đủ** và **tuân thủ nghiêm ngặt quy trình an toàn thao tác**.", sources: ['Điều 9, Quy trình TBA KNT'] },
+            { q: "Tần suất kiểm tra độ kín của phòng điều khiển tại TBA KNT?", a: "Thường xuyên, đảm bảo **phòng sạch sẽ, khô ráo**, **không bị côn trùng xâm nhập** và **hệ thống điều hòa hoạt động tốt**.", sources: ['Điều 19, Quy trình TBA KNT'] },
+            { q: "Khi phát hiện MBA trong TBA KNT bị quá tải, biện pháp xử lý là gì?", a: "Báo cáo điều độ để **thực hiện chuyển tải** hoặc **giảm tải** thông qua các thiết bị đóng cắt tự động hoặc bán tự động.", sources: ['Điều 6, 7, Quy trình TBA KNT'] },
+            { q: "Việc kiểm tra ắc quy tại TBA KNT nhằm mục đích gì?", a: "Đảm bảo **nguồn điện một chiều (DC) dự phòng** luôn ổn định, cung cấp đủ năng lượng cho **thiết bị bảo vệ, điều khiển** khi mất điện lưới.", sources: ['Điều 16, Quy trình TBA KNT'] },
+            { q: "Yêu cầu về hệ thống chiếu sáng sự cố tại TBA KNT?", a: "Hệ thống chiếu sáng sự cố phải **hoạt động tự động** khi mất điện lưới và đảm bảo **độ sáng cần thiết** cho nhân viên thao tác/kiểm tra.", sources: ['Điều 18, Quy trình TBA KNT'] },
+            { q: "Việc kiểm tra hệ thống camera giám sát trong TBA KNT có tần suất như thế nào?", a: "Phải kiểm tra **thường xuyên** (hàng ngày hoặc theo ca), đảm bảo **camera hoạt động tốt, góc quan sát rõ ràng** và **kết nối ổn định**.", sources: ['Điều 10, Quy trình TBA KNT'] },
+            { q: "Trong TBA KNT, các công việc nào cần phải có Lệnh công tác hoặc Phiếu công tác?", a: "Tất cả các công việc **thao tác, sửa chữa, thí nghiệm** (trực tiếp tại hiện trường) đều phải tuân thủ nghiêm ngặt quy định về an toàn điện.", sources: ['Điều 9, Quy trình TBA KNT'] },
+            { q: "Khi thao tác DCL từ xa qua hệ thống RTĐ, Nhân viên QLVH cần kiểm tra những gì trước và sau thao tác?", a: "Trước: Kiểm tra **trạng thái khóa liên động** và **điều kiện vận hành**. Sau: Kiểm tra **trạng thái DCL (đóng/cắt)** và **tín hiệu cảnh báo**.", sources: ['Điều 9, Quy trình TBA KNT'] },
+            { q: "Mục đích của việc kiểm tra hệ thống điều hòa, thông gió tại phòng điều khiển TBA KNT?", a: "Duy trì **nhiệt độ và độ ẩm** trong phòng ở mức tiêu chuẩn để bảo vệ các thiết bị nhị thứ và thiết bị điều khiển.", sources: ['Điều 19, Quy trình TBA KNT'] },
+            { q: "Các yêu cầu về ghi chép sổ sách vận hành trong TBA KNT?", a: "Phải ghi chép đầy đủ, chính xác vào **Sổ nhật ký vận hành điện tử (hoặc giấy)**, đặc biệt là các thông số bất thường và thao tác sự cố.", sources: ['Điều 13, Quy trình TBA KNT'] },
+            { q: "Công tác kiểm tra Cáp ngầm Trung áp có tần suất tối thiểu là bao nhiêu?", a: "Tối thiểu **01 lần/quý**.", sources: ['Điều 18, Quy trình Cáp Ngầm'] },
+            { q: "Yêu cầu kỹ thuật đối với vị trí đặt các tủ, hộp đầu cáp ngầm trung áp?", a: "Phải đặt ở vị trí **cao ráo, dễ tiếp cận, có mái che**, và **có biển báo an toàn** rõ ràng.", sources: ['Điều 10, Quy trình Cáp Ngầm'] },
+            { q: "Khi kiểm tra định kỳ Cáp ngầm, Nhân viên QLVH cần kiểm tra những gì trên tuyến cáp (trên mặt đất)?", a: "Kiểm tra **tình trạng dấu hiệu tuyến cáp, các biển báo, nắp cống (manhole), và các công trình dân sinh có khả năng xâm phạm cáp**.", sources: ['Điều 21, Quy trình Cáp Ngầm'] },
+            { q: "Phải làm gì khi phát hiện vị trí tuyến cáp bị rò rỉ nước hoặc ngập úng kéo dài?", a: "Phải **báo cáo ngay**, **bơm hút nước** và **tìm biện pháp chống ngập úng vĩnh viễn** để bảo vệ vỏ cáp.", sources: ['Điều 22, Quy trình Cáp Ngầm'] },
+            { q: "Tiêu chuẩn về nhiệt độ giới hạn cho phép đối với Cáp ngầm trung áp?", a: "Nhiệt độ tối đa cho phép của lõi cáp là **90°C**.", sources: ['Điều 11, Quy trình Cáp Ngầm'] },
+            { q: "Công tác bảo dưỡng thường xuyên Cáp ngầm trung áp bao gồm những nội dung gì?", a: "Bao gồm **vệ sinh, kiểm tra tủ/hộp đấu cáp, sơn chống rỉ** các chi tiết kim loại và **kiểm tra tình trạng tiếp địa**.", sources: ['Điều 30, Quy trình Cáp Ngầm'] },
+            { q: "Mục đích của việc kiểm tra tình trạng tiếp địa tại các vị trí hộp đầu cáp ngầm?", a: "Đảm bảo **an toàn cho người và thiết bị**, đồng thời **giảm thiểu ảnh hưởng của quá điện áp** đối với vỏ cáp.", sources: ['Điều 33, Quy trình Cáp Ngầm'] },
+            { q: "Khi nào cần kiểm tra bất thường tuyến cáp ngầm trung áp?", a: "Khi có **thông báo từ cấp điều độ về sự cố cáp**, **có sự cố lưới liên quan**, hoặc **có công trình xây dựng gần tuyến cáp**.", sources: ['Điều 19, Quy trình Cáp Ngầm'] },
+            { q: "Khi phát hiện bất thường (nhiệt độ cao, tiếng ồn lạ) tại hộp đầu cáp, Nhân viên QLVH phải làm gì?", a: "Phải **kiểm tra bằng mắt thường và thiết bị đo nhiệt**, sau đó **báo cáo** và **thực hiện các biện pháp cô lập/giảm tải** nếu cần.", sources: ['Điều 23, Quy trình Cáp Ngầm'] },
+            { q: "Quy trình xử lý sự cố Cáp ngầm bao gồm các bước chính nào?", a: "Bao gồm: **Cô lập và xác định sự cố, định vị điểm sự cố, đào và sửa chữa/thay thế, thí nghiệm và đóng điện trở lại**.", sources: ['Điều 45, Quy trình Cáp Ngầm'] },
+            { q: "Việc lắp đặt các thiết bị cảnh báo nhiệt độ, độ ẩm trong mương cáp có mục đích gì?", a: "Nhằm **giám sát môi trường** xung quanh cáp, cảnh báo sớm các nguy cơ gây hỏng hóc hoặc quá tải cáp.", sources: ['Điều 15, Quy trình Cáp Ngầm'] },
+            { q: "Trong công tác đào và sửa chữa cáp, yêu cầu về an toàn điện là gì?", a: "Phải thực hiện **cô lập và tiếp địa đầy đủ** cả hai đầu cáp theo đúng **Quy trình An toàn điện** trước khi tiến hành sửa chữa.", sources: ['Điều 48, Quy trình Cáp Ngầm'] },
+            { q: "Yêu cầu về việc lấp đất sau khi sửa chữa cáp ngầm?", a: "Đất lấp phải được **đầm chặt từng lớp**, đảm bảo **không có vật sắc nhọn**, và **khôi phục lại mặt bằng** như trạng thái ban đầu.", sources: ['Điều 50, Quy trình Cáp Ngầm'] },
+            { q: "Mục đích của việc kiểm tra mương, hào cáp là gì?", a: "Đảm bảo **mương, hào sạch sẽ, khô ráo**, **không bị sạt lở** và **không có vật lạ** xâm nhập gây ảnh hưởng đến cáp.", sources: ['Điều 22, Quy trình Cáp Ngầm'] },
+            { q: "Việc kiểm tra tủ/hộp đấu cáp có cần kiểm tra độ kín nước không?", a: "Có. Phải đảm bảo **tủ, hộp đấu cáp kín nước** và **không có dấu hiệu ẩm ướt** để bảo vệ đầu cáp.", sources: ['Điều 30, Quy trình Cáp Ngầm'] },
+            { q: "Khi phát hiện có công trình bên ngoài xâm phạm hành lang tuyến cáp ngầm, Nhân viên QLVH cần làm gì?", a: "Phải **lập biên bản, yêu cầu ngừng thi công ngay lập tức** và **báo cáo cấp trên** để phối hợp xử lý.", sources: ['Điều 21, Quy trình Cáp Ngầm'] },
+            { q: "Thiết bị chính được sử dụng để định vị điểm sự cố cáp ngầm là gì?", a: "Thường sử dụng **thiết bị phát xung TDR (Time Domain Reflectometer)** hoặc **thiết bị định vị âm tần**.", sources: ['Điều 45, Quy trình Cáp Ngầm'] },
+            { q: "Yêu cầu về nhãn mác cáp tại các vị trí mối nối và đầu cáp?", a: "Phải có **nhãn mác rõ ràng**, thể hiện **tên tuyến cáp, số thứ tự mối nối/đầu cáp, và ngày lắp đặt**.", sources: ['Điều 5, Quy trình Cáp Ngầm'] },
+            { q: "Khi nào cần bảo dưỡng máy cắt bằng khí SF6?", a: "Thực hiện định kỳ theo khuyến cáo nhà sản xuất và khi áp suất khí SF6 giảm dưới mức cho phép.", sources: ['Quy trình chung'] },
+            { q: "Yêu cầu về ánh sáng tại khu vực thao tác MBA?", a: "Phải đảm bảo **đủ ánh sáng** cho nhân viên vận hành thực hiện thao tác an toàn và đọc các chỉ số.", sources: ['Quy trình TBA PP'] },
+            { q: "Dây tiếp địa di động phải tuân thủ yêu cầu nào?", a: "Phải đảm bảo **tiết diện dây đủ lớn**, **tiếp xúc tốt** và **được kẹp chặt** vào thiết bị.", sources: ['Quy trình ATĐ'] },
+            { q: "Trách nhiệm của Người chỉ huy trực tiếp công tác là gì?", a: "Là người **chịu trách nhiệm chính** về **an toàn** và **chất lượng** công việc trong suốt quá trình thực hiện.", sources: ['Quy trình ATĐ'] },
+            { q: "Việc kiểm tra định kỳ bằng mắt thường các thiết bị nhất thứ tại TBA 110kV KNT có tần suất như thế nào?", a: "Thực hiện theo lịch tuần/tháng theo quy định của Trung tâm Điều độ (A0/A1) và Đơn vị quản lý.", sources: ['Quy trình TBA KNT'] },
+            { q: "Yêu cầu về kiểm tra và bảo dưỡng hệ thống sấy (Heater) trong tủ bảng điện?", a: "Phải kiểm tra **hoạt động, nhiệt độ** và **đảm bảo không bị ẩm ướt** để tránh gây sự cố thiết bị nhị thứ.", sources: ['Quy trình TBA KNT'] },
+            { q: "Các biện pháp phòng ngừa phóng điện thứ cấp trên lưới điện trung áp?", a: "Bao gồm: **Rửa sứ định kỳ**, **kiểm tra bề mặt cách điện**, và **sử dụng vật liệu cách điện chống bẩn**.", sources: ['Quy trình ĐZTA'] },
+            { q: "Khi kiểm tra cột bêtông, cần chú ý đến dấu hiệu nào về sự ăn mòn thép bên trong?", a: "Chú ý đến **hiện tượng nứt dọc thân cột** và **vệt rỉ sét chảy ra** từ vết nứt.", sources: ['Quy trình ĐZTA'] },
+            { q: "Yêu cầu về màu sắc của biển báo 'Cấm leo trèo, có điện nguy hiểm'?", a: "Nền **màu trắng**, viền **màu đỏ** và chữ **màu đen**.", sources: ['Quy trình ATĐ'] },
+            { q: "Khi nào cần lập Phiếu thao tác?", a: "Lập Phiếu thao tác khi thực hiện **thao tác chuyển đổi chế độ vận hành** hoặc **cô lập thiết bị** theo Lệnh điều độ.", sources: ['Quy trình VH'] },
+
+            // --- BỘ CÂU HỎI MỚI BỔ SUNG (THEO YÊU CẦU) ---
+            // --- TỪ QUY TRÌNH ĐƯỜNG DÂY TRUNG ÁP (SỬA 9.7.25) ---
+            { q: "Quy trình Quản lý vận hành đường dây trung áp áp dụng cho cấp điện áp nào?", a: "Áp dụng cho đường dây có điện áp **từ trên 01 kV đến 35 kV**, dùng dây trần và dây bọc.", sources: ['Điều 1, QT.31'] },
+            { q: "Thế nào là 'Trạng thái sự cố của đường dây'?", a: "Là trạng thái khi có hư hỏng gây mất điện hoặc có nguy cơ gây sự cố cần phải tách đường dây ra khỏi vận hành đột xuất để sửa chữa.", sources: ['Điều 3, QT.31'] },
+            { q: "Nhân viên quản lý vận hành phải được huấn luyện an toàn điện định kỳ và có kiểm tra xếp bậc an toàn theo quy định không?", a: "Có, việc huấn luyện và sát hạch xếp bậc an toàn điện phải được thực hiện định kỳ theo quy định.", sources: ['Điều 4, QT.31'] },
+            { q: "Hồ sơ kỹ thuật của đường dây phải được cập nhật trên phần mềm nào?", a: "Phải được cập nhật trên phần mềm **PMIS** hoặc phần mềm quản lý kỹ thuật của đơn vị.", sources: ['Điều 5, QT.31'] },
+            { q: "Đơn vị QLVH phải có biện pháp tăng cường bảo vệ cột điện ở những vị trí nào?", a: "Tại các vị trí **sát bờ sông, suối có khả năng sạt lở**, bãi biển có khả năng nhiễm mặn, và gần các công trình xây dựng có nguy cơ ảnh hưởng.", sources: ['Điều 8, QT.31'] },
+            { q: "Độ lệch điện áp vận hành cho phép tại điểm đấu nối với khách hàng sử dụng điện là bao nhiêu?", a: "Độ lệch cho phép là **± 5%** so với điện áp danh định.", sources: ['Điều 12, QT.31'] },
+            { q: "Trong chế độ sự cố hệ thống điện, cho phép mức dao động điện áp trên lưới điện phân phối là bao nhiêu?", a: "Cho phép mức dao động trong khoảng **± 10%** so với điện áp danh định.", sources: ['Điều 12, QT.31'] },
+            { q: "Hệ số an toàn của cột thép và cột bê tông ly tâm, xà và móng cột không được nhỏ hơn bao nhiêu?", a: "Không được nhỏ hơn **1,2**.", sources: ['Điều 13, QT.31'] },
+            { q: "Cột không được nghiêng quá bao nhiêu so với chiều cao của cột?", a: "Không được nghiêng quá **1/200** chiều cao của cột.", sources: ['Điều 13, QT.31'] },
+            { q: "Khi nào phải thay thế cột thép, xà thép bị rỉ, ăn mòn?", a: "Phải thay thế khi bị rỉ, ăn mòn quá **20%** tiết diện ngang.", sources: ['Điều 13, QT.31'] },
+            { q: "Cột bê tông cốt thép có vết nứt dọc với chiều rộng khe nứt lớn hơn 0,5mm và chiều dài lớn hơn 200cm thì phải xử lý thế nào?", a: "Phải **thay cột**.", sources: ['Điều 13, QT.31'] },
+            { q: "Ty của cách điện gốm/thủy tinh bị rỉ mọt đến bao nhiêu % tiết diện thì phải thay thế?", a: "Phải thay thế khi ty bị rỉ mọt đến **10%** tiết diện ngang.", sources: ['Điều 14, QT.31'] },
+            { q: "Cho phép tiếp tục vận hành chuỗi cách điện gốm/thủy tinh khi nào?", a: "Khi có bát cách điện bị sứt mẻ ≤ 1 cm² hoặc bị vỡ ≤ 1/2 số bát và các bát còn lại không có vết nứt, nhưng phải thường xuyên kiểm tra.", sources: ['Điều 14, QT.31'] },
+            { q: "Độ lệch của chuỗi cách điện đỡ so với phương thẳng đứng không được quá bao nhiêu độ?", a: "Không quá **15°**.", sources: ['Điều 14, QT.31'] },
+            { q: "Khi dây dẫn hoặc dây chống sét bị đứt vượt quá 17% tổng số sợi thì phải xử lý như thế nào?", a: "Phải **cắt đi và dùng ống nối để nối lại**.", sources: ['Điều 15, QT.31'] },
+            { q: "Trường hợp dây nhôm lõi thép mà lõi thép bị tổn thương thì xử lý thế nào?", a: "Phải **cắt đi và dùng ống nối chuyên dụng để nối lại**, không kể số sợi nhôm hoặc thép bị đứt.", sources: ['Điều 15, QT.31'] },
+            { q: "Hệ số an toàn của dây dẫn, dây chống sét ở các khoảng vượt quan trọng không được nhỏ hơn bao nhiêu?", a: "Không được nhỏ hơn **2,5**.", sources: ['Điều 15, QT.31'] },
+            { q: "Việc nối dây bọc trung áp phải sử dụng loại ống nối nào?", a: "Phải sử dụng **ống nối chuyên dùng cho dây bọc** để tránh hiện tượng thấm nước dọc trục dây dẫn.", sources: ['Điều 15, QT.31'] },
+            { q: "Trong một khoảng cột, khoảng cách nhỏ nhất từ mối nối đến khóa đỡ kiểu trượt là bao nhiêu?", a: "Không nhỏ hơn **25 m**.", sources: ['Điều 15, QT.31'] },
+            { q: "Độ bền cơ học chịu kéo đứt của mối nối dây dẫn yêu cầu không nhỏ hơn bao nhiêu % độ bền của dây?", a: "Không nhỏ hơn **90%** độ bền của dây dẫn.", sources: ['Điều 15, QT.31'] },
+            { q: "Điện trở tiếp địa của cột trong khoảng 2km tới TBA 110kV phải nhỏ hơn bao nhiêu?", a: "Phải nhỏ hơn **10 Ω**.", sources: ['Điều 16, QT.31'] },
+            { q: "Khi nào phải thay mới tăng đơ, dây néo và các bộ phận của dây néo?", a: "Phải thay mới khi bị rỉ quá **10%** tiết diện dây.", sources: ['Điều 18, QT.31'] },
+            { q: "Đối với dây néo bằng cáp thép nhiều sợi, nếu số sợi đứt từ 10% trở lên thì phải làm gì?", a: "Phải **thay dây khác**.", sources: ['Điều 18, QT.31'] },
+            { q: "Hành lang bảo vệ an toàn đường dây trên không được giới hạn bởi chiều rộng như thế nào đối với dây trần 35kV?", a: "Được giới hạn bởi hai mặt thẳng đứng, cách dây ngoài cùng về mỗi phía là **3,0 m** khi dây ở trạng thái tĩnh.", sources: ['Điều 20, QT.31'] },
+            { q: "Trong thành phố, khoảng cách từ điểm bất kỳ của cây đến dây dẫn trần điện áp đến 35kV ở trạng thái võng cực đại không được nhỏ hơn bao nhiêu?", a: "Không nhỏ hơn **1,5 m**.", sources: ['Điều 21, QT.31'] },
+            { q: "Đối với nhà ở được phép tồn tại trong hành lang bảo vệ, mái lợp và tường bao phải làm bằng vật liệu gì?", a: "Phải làm bằng **vật liệu không cháy**.", sources: ['Điều 22, QT.31'] },
+            { q: "Khoảng cách an toàn phóng điện tối thiểu từ dây dẫn trần 35kV đến thiết bị, dụng cụ, phương tiện làm việc là bao nhiêu?", a: "Là **4,0 m**.", sources: ['Điều 23, QT.31'] },
+            { q: "Khi kiểm tra phát hiện thấy dây điện bị đứt rơi xuống đất, phải ngăn mọi người không được đến gần vị trí dây rơi với khoảng cách tối thiểu là bao nhiêu?", a: "Khoảng cách tối thiểu là **10 m**.", sources: ['Điều 29, QT.31'] },
+            { q: "Chậm nhất là bao nhiêu ngày sau khi kiểm tra thường xuyên, các khiếm khuyết phải được xử lý xong?", a: "Chậm nhất là **10 ngày**.", sources: ['Điều 42, QT.31'] },
+            { q: "Chiều dày tổng cộng của toàn bộ tấm đệm dùng để điều chỉnh cột thép bị nghiêng không được quá bao nhiêu?", a: "Không quá **40 mm**.", sources: ['Điều 46, QT.31'] },
+            { q: "Khi sơn cột đường dây đang vận hành, thùng sơn phải treo cách chỗ bắt chuỗi sứ cách điện tối thiểu bao nhiêu mét?", a: "Tối thiểu **1,0 m** (đối với điện áp đến 35kV).", sources: ['Điều 52, QT.31'] },
+            { q: "Móng cột đã đào lên để quét lại bitum hoặc hắc ín không được phép để trơ quá bao nhiêu ngày?", a: "Không được để trơ quá **03 ngày**.", sources: ['Điều 54, QT.31'] },
+            { q: "Khi sửa chữa cột bê tông, vữa xi măng chỉ được dùng trong khoảng bao lâu sau khi trộn?", a: "Chỉ được dùng trong khoảng **hai giờ** sau khi trộn.", sources: ['Điều 59, QT.31'] },
+            { q: "Mối nối dây dẫn, dây chống sét sau khi sửa chữa phải cách khóa đỡ tối thiểu bao nhiêu?", a: "Tối thiểu **1,2 m**.", sources: ['Điều 69, 70, QT.31'] },
+
+            // --- TỪ QUY TRÌNH CÁP NGẦM TRUNG ÁP ---
+            { q: "Quy trình quản lý cáp ngầm trung áp áp dụng cho cấp điện áp nào?", a: "Áp dụng cho đường cáp điện ngầm có điện áp **từ trên 01kV đến 35kV**.", sources: ['Điều 1, QT.34'] },
+            { q: "Chiều rộng hành lang bảo vệ đường cáp ngầm đặt trực tiếp trong đất ổn định là bao nhiêu?", a: "Là **1,0 m** về mỗi phía tính từ mặt ngoài của vỏ cáp hoặc sợi cáp ngoài cùng.", sources: ['Điều 6, QT.34'] },
+            { q: "Khi thi công công trình gần đường cáp ngầm, bên thi công phải thông báo trước cho đơn vị QLVH ít nhất bao nhiêu ngày?", a: "Phải thông báo trước ít nhất **10 ngày**.", sources: ['Điều 7, QT.34'] },
+            { q: "Trong hành lang bảo vệ cáp ngầm trên biển, các tàu thuyền không có nhiệm vụ không được thả neo trong phạm vi nào?", a: "Không được thả neo trong phạm vi **02 hải lý** tính từ mép ngoài cùng về 02 phía của đường cáp.", sources: ['Điều 7, QT.34'] },
+            { q: "Đoạn cáp ngầm nối với đường dây trên không phải được đặt trong ống bảo vệ cao bao nhiêu mét tính từ mặt đất?", a: "Phải đặt trong ống bảo vệ đến độ cao **hai mét (2m)**.", sources: ['Điều 9, QT.34'] },
+            { q: "Khoảng cách giữa hai cột mốc/biển báo liền kề để đánh dấu tuyến cáp ngầm không được quá bao nhiêu mét?", a: "Không quá **20 m**.", sources: ['Điều 10, QT.34'] },
+            { q: "Đối với cáp 1 pha có chiều dài từ 100m đến 300m, cần áp dụng phương pháp nối đất vỏ cáp như thế nào?", a: "Nối đất vỏ cáp 1 đầu, đầu còn lại cần nối đất gián tiếp thông qua **bộ giới hạn điện áp vỏ cáp (SVL)**.", sources: ['Điều 12, QT.34'] },
+            { q: "Thời hạn lưu kho khuyến cáo đối với các loại đầu cáp phổ biến hiện nay là khoảng bao lâu?", a: "Khoảng **03 năm**.", sources: ['Điều 15, QT.34'] },
+            { q: "Công tác kiểm tra, đo đạc trị số hệ thống nối đất đường cáp ngầm được thực hiện theo chu kỳ nào?", a: "Theo chu kỳ **03 năm/01 lần**.", sources: ['Điều 21, QT.34'] },
+            { q: "Người thi công đầu cáp, hộp nối cáp ngầm phải có điều kiện gì?", a: "Phải được **huấn luyện và cấp chứng chỉ, giấy chứng nhận** về công tác thi công cáp ngầm, đầu cáp, hộp nối.", sources: ['Điều 25, QT.34'] },
+            { q: "Hộp nối cáp có được đặt ở chỗ dốc đứng hoặc mương nước xói không?", a: "Không được. Hộp nối cáp phải được kê lên bệ đỡ và không được đặt ở những vị trí đó.", sources: ['Điều 26, QT.34'] },
+            { q: "Cáp điện có thuộc danh mục thiết bị phải kiểm định an toàn kỹ thuật không?", a: "Có, cáp điện thuộc danh mục thiết bị phải kiểm định an toàn kỹ thuật theo quy định tại Thông tư số 02/2025/TT-BCT.", sources: ['Điều 32, QT.34'] },
+
+            // --- TỪ QUY TRÌNH TBA TRUNG GIAN KHÔNG NGƯỜI TRỰC & TBA PHÂN PHỐI ---
+            { q: "Nhiệt độ dầu lớp trên cùng của MBA làm mát tự nhiên bằng dầu không được vượt quá bao nhiêu độ C?", a: "Không được vượt quá **105°C**.", sources: ['Điều 4, QT.32 & QT.33'] },
+            { q: "MBA được phép vận hành lâu dài với điện áp cao hơn định mức bao nhiêu %?", a: "Không quá **5%** điện áp định mức.", sources: ['Điều 5, QT.32 & QT.33'] },
+            { q: "Đối với MBA dầu, thời gian cho phép quá tải 30% là bao lâu?", a: "Là **120 phút**.", sources: ['Điều 7, QT.32 & QT.33'] },
+            { q: "Đối với MBA khô, thời gian cho phép quá tải 20% là bao lâu?", a: "Là **60 phút**.", sources: ['Điều 7, QT.32 & QT.33'] },
+            { q: "Khi nào phải bố trí công nhân vận hành trực tại trạm biến áp không người trực (TGK)?", a: "Khi TGK quá tải, hoặc khi TGK có dấu hiệu bất thường nhưng chưa đến mức phải tách ra khỏi vận hành.", sources: ['Điều 11, QT.33'] },
+            { q: "Tần suất kiểm tra đột xuất đối với MBA quá tải (mang tải >105%) là khi nào?", a: "Kiểm tra vào thời điểm **tải cao**.", sources: ['Điều 22, QT.32'] },
+            { q: "Biên bản thí nghiệm của MBA mới chưa đưa vào vận hành có hiệu lực trong bao nhiêu ngày?", a: "Có hiệu lực trong **90 ngày** kể từ ngày thí nghiệm.", sources: ['Điều 34, QT.32'] },
+
+            // --- TỪ QUY ĐỊNH ĐIỀU TRA SỰ CỐ (QĐ 1515) ---
+            { q: "Sự cố cấp 1 đối với lưới điện 110kV trở lên được xác định khi nào?", a: "Khi sự cố gây cháy hoặc hư hỏng phải thay mới MBA 110kV trở lên; đổ cột, đứt dây đường dây từ 110kV trở lên (trừ thiên tai)...", sources: ['Điều 8, QĐ 1515'] },
+            { q: "Sự cố đường dây 110kV có thời gian khắc phục trên 48 giờ được phân loại là sự cố cấp mấy?", a: "Là sự cố **cấp 2**.", sources: ['Điều 9, QĐ 1515'] },
+            { q: "Sự cố lưới điện trung áp gây mất điện khách hàng được phân loại là sự cố cấp mấy?", a: "Là sự cố **cấp 3**.", sources: ['Điều 10, QĐ 1515'] },
+            { q: "Thế nào là sự cố khách quan?", a: "Là sự cố xảy ra khi đơn vị QLVH đã thực hiện đầy đủ trách nhiệm và biện pháp phòng ngừa nhưng vẫn không ngăn chặn được, ví dụ do thiên tai, địch họa, hoặc do bên thứ ba gây ra.", sources: ['Điều 12, QĐ 1515'] },
+            { q: "Thế nào là sự cố chủ quan?", a: "Là sự cố xảy ra do lỗi của lãnh đạo, nhân viên vận hành, hoặc nhân viên sửa chữa và thí nghiệm không thực hiện đúng quy trình, quy định.", sources: ['Điều 13, QĐ 1515'] },
+            { q: "Thời hạn gửi Báo cáo nhanh sự cố lưới điện 110kV, 220kV là khi nào?", a: "Ngay sau khi cô lập phần tử bị sự cố và khắc phục tạm thời tình trạng vận hành lưới điện.", sources: ['Điều 17, QĐ 1515'] },
+            { q: "Thời hạn gửi Báo cáo sự cố đầy đủ là không muộn hơn bao nhiêu giờ kể từ khi xảy ra sự cố?", a: "Không muộn hơn **48 giờ**.", sources: ['Điều 17, QĐ 1515'] },
+            { q: "Thời hạn điều tra đối với sự cố cấp 1 là không quá bao nhiêu ngày làm việc?", a: "Không quá **20 ngày làm việc**.", sources: ['Điều 22, QĐ 1515'] },
+            { q: "Thời hạn điều tra đối với sự cố cấp 3 là không quá bao nhiêu ngày làm việc?", a: "Không quá **05 ngày làm việc**.", sources: ['Điều 22, QĐ 1515'] },
+
+            // --- TỪ QUY ĐỊNH QUẢN LÝ KỸ THUẬT (QĐ 905 & QĐ 197) ---
+            { q: "Thế nào là Mất điện kéo dài?", a: "Là mất điện với thời gian lớn hơn **05 phút**.", sources: ['Điều 2, QĐ 905 & QĐ 197'] },
+            { q: "Thế nào là Mất điện thoáng qua?", a: "Là mất điện với thời gian nhỏ hơn hoặc bằng **05 phút**.", sources: ['Điều 2, QĐ 905 & QĐ 197'] },
+            { q: "Chu kỳ đại tu đối với đường dây tải điện ven biển là bao nhiêu năm một lần?", a: "Là **4 năm 1 lần**.", sources: ['Điều 46, QĐ 905'] },
+            { q: "Thời gian tiêu chuẩn ngừng vận hành để đại tu một tổ máy tuabin, máy phát nhiệt điện là không quá bao nhiêu ngày?", a: "Không quá **60 ngày/1 tổ máy**.", sources: ['Điều 47, QĐ 905'] },
+            { q: "Thời gian tiêu chuẩn ngừng vận hành để đại tu một tổ máy thủy điện có công suất dưới 200MW là không quá bao nhiêu ngày?", a: "Không quá **30 ngày/1 tổ máy**.", sources: ['Điều 47, QĐ 905'] },
+            { q: "Thời gian giữa trung tu và đại tu không được ít hơn bao nhiêu năm?", a: "Không ít hơn **2 năm**.", sources: ['Điều 48, QĐ 905'] },
+            { q: "Thời gian bảo hành đối với thiết bị chính của nhà máy điện, đường dây và trạm biến áp sau SCL là bao lâu?", a: "Là **2160 giờ vận hành thực tế**, nhưng không quá **180 ngày** kể từ ngày nghiệm thu bàn giao.", sources: ['Phụ lục 3, QĐ 905'] },
+            { q: "Vận hành đầy tải mức 2 (cảnh báo) đối với lưới điện 110kV trở lên là khi mang tải ở mức nào?", a: "Mang tải từ **90% đến 100%** dòng điện cho phép (Icp).", sources: ['Điều 14, QĐ 197'] },
+            { q: "Vận hành quá tải đối với lưới điện hạ áp là khi nào?", a: "Khi mang tải **trên 100%** dòng điện cho phép (Icp).", sources: ['Điều 14, QĐ 197'] },
+        ];
+
+        const questionBank = [
+            // --- BỘ CÂU HỎI TRẮC NGHIỆM TỪ BỘ CÂU HỎI GỐC ---
+            { q: "Mức độ nghiêm trọng nhất của sự cố trong EVNNPC là cấp nào?", options: ["Cấp 4", "Cấp 3", "Cấp 2", "Cấp 1"], a: "Cấp 1", exp: "Sự cố cấp 1 là sự cố nghiêm trọng nhất theo Điều 8, QĐ 1515." },
+            { q: "Chỉ số SAIDI dùng để đánh giá điều gì?", options: ["Số lần mất điện", "Thời gian mất điện trung bình", "Tỷ lệ điện tự dùng", "Suất tiêu hao nhiên liệu"], a: "Thời gian mất điện trung bình", exp: "SAIDI (System Average Interruption Duration Index) đánh giá thời gian mất điện trung bình theo Điều 21, QĐ 905." },
+            { q: "Thời gian tối đa để bắt đầu khắc phục hư hỏng bảo hành SCL (Đơn vị trong nước) là bao lâu?", options: ["24 giờ", "03 ngày", "07 ngày", "15 ngày"], a: "07 ngày", exp: "Thời gian tối đa là 07 ngày kể từ ngày yêu cầu theo Phụ lục 3, QĐ 905." },
+            { q: "Theo QĐ 905, việc đánh giá công tác QLKT được thực hiện bao nhiêu lần/năm?", options: ["01 lần", "02 lần", "03 lần", "04 lần"], a: "02 lần", exp: "Đánh giá 02 lần/năm (6 tháng và cả năm) theo Điều 84, QĐ 905." },
+            { q: "Dòng điện qua điểm trung tính phía hạ áp của MBA phân phối không được vượt quá bao nhiêu phần trăm trung bình cộng dòng các pha?", options: ["10%", "15%", "25%", "50%"], a: "25%", exp: "Không vượt quá 25% trung bình cộng dòng điện các pha theo Điều 8, QT.32." },
+            { q: "Chỉ số MAIFI trong QLKT dùng để đánh giá điều gì?", options: ["Số lần mất điện kéo dài", "Thời gian mất điện", "Số lần mất điện thoáng qua trung bình", "Độ lệch điện áp"], a: "Số lần mất điện thoáng qua trung bình", exp: "MAIFI (Momentary Average Interruption Frequency Index) là chỉ số về số lần mất điện thoáng qua trung bình theo Điều 23, QĐ 905." },
+            { q: "Khoảng cách an toàn phóng điện ngang từ dây dẫn trần 22kV đến cây xanh là bao nhiêu?", options: ["1,0 m", "1,5 m", "2,0 m", "3,0 m"], a: "2,0 m", exp: "Đối với dây trần điện áp đến 22kV, khoảng cách là 2,0 m theo bảng tại Điều 20, QT.31." },
+            { q: "Nhiệt độ dầu lớp trên cùng của MBA làm mát tự nhiên không được vượt quá bao nhiêu?", options: ["85°C", "95°C", "105°C", "115°C"], a: "105°C", exp: "Nhiệt độ dầu ở lớp trên cùng không được vượt quá 105°C theo Điều 4, QT.32 & QT.33." },
+            { q: "Chu kỳ sửa chữa lớn đối với đường dây tải điện ven biển là bao nhiêu năm/lần?", options: ["2 năm", "4 năm", "6 năm", "8 năm"], a: "4 năm", exp: "Đường dây ven biển có chu kỳ SCL là 4 năm/1 lần, các đường dây khác là 6 năm/1 lần theo Điều 25, QĐ 197." },
+            { q: "Nhiệt độ tối đa cho phép của lõi cáp ngầm trung áp là bao nhiêu?", options: ["70°C", "80°C", "90°C", "100°C"], a: "90°C", exp: "Tiêu chuẩn nhiệt độ của lõi cáp ngầm là 90°C (trong khi dây dẫn trên không là 70°C)." },
+            { q: "Thời hạn điều tra đối với sự cố cấp 2 là không quá bao nhiêu ngày làm việc?", options: ["5 ngày", "10 ngày", "15 ngày", "20 ngày"], a: "15 ngày", exp: "Sự cố cấp 2 có thời hạn điều tra không quá 15 ngày làm việc theo Điều 22, QĐ 1515." },
+            { q: "Cột điện không được nghiêng quá bao nhiêu so với chiều cao của nó?", options: ["1/100", "1/150", "1/200", "1/250"], a: "1/200", exp: "Cột không được nghiêng quá 1/200 chiều cao của cột theo Điều 13, QT.31." },
+            { q: "Khi dây dẫn bị đứt ≤ 17% tổng số sợi thì có thể xử lý bằng cách nào?", options: ["Thay dây mới", "Nối lại bằng ống nối", "Quấn bảo dưỡng", "Để nguyên vận hành"], a: "Quấn bảo dưỡng", exp: "Nếu đứt ≤ 17% tổng số sợi thì có thể quấn bảo dưỡng, nếu vượt quá thì phải cắt và nối lại, theo Điều 15, QT.31." },
+            { q: "Trong một khoảng cột cho phép tối đa bao nhiêu mối nối trên một dây dẫn?", options: ["Không cho phép", "Một mối nối", "Hai mối nối", "Không giới hạn"], a: "Một mối nối", exp: "Trong một khoảng cột cho phép tối đa một mối nối trên một dây dẫn, theo Điều 15, QT.31." },
+            { q: "Khoảng cách an toàn tối thiểu khi có dây điện đứt rơi xuống đất là bao nhiêu mét?", options: ["3 m", "5 m", "8 m", "10 m"], a: "10 m", exp: "Phải ngăn mọi người không được đến gần vị trí dây rơi xuống đất với khoảng cách nhỏ hơn 10 m, theo Điều 29, QT.31." },
+            { q: "Chiều rộng hành lang bảo vệ của đường dây cáp ngầm đặt trực tiếp trong đất không ổn định là bao nhiêu?", options: ["0.5 m", "1.0 m", "1.5 m", "2.0 m"], a: "1.5 m", exp: "Đối với đất không ổn định, chiều rộng hành lang là 1,5m về mỗi phía, theo Điều 6, QT.34." },
+            { q: "Thời gian cho phép MBA dầu vận hành quá tải 45% so với dòng định mức là bao lâu?", options: ["45 phút", "60 phút", "80 phút", "120 phút"], a: "80 phút", exp: "Theo bảng giới hạn quá tải trong trường hợp đặc biệt, quá tải 45% được phép trong 80 phút, theo Điều 7, QT.32." },
+            { q: "Sự cố đường dây 220kV có thời gian khắc phục trên 36 giờ được phân loại là sự cố cấp mấy?", options: ["Cấp 1", "Cấp 2", "Cấp 3", "Bất thường"], a: "Cấp 2", exp: "Theo Điều 9, QĐ 1515, đây là sự cố cấp 2." },
+            { q: "Chu kỳ đại tu đối với các tổ máy thủy điện có công suất dưới 200 MW là bao nhiêu năm/lần?", options: ["4 năm", "5 năm", "Tối thiểu 6 năm", "8 năm"], a: "Tối thiểu 6 năm", exp: "Chu kỳ đại tu tối thiểu là 6 năm 1 lần hoặc theo kết quả phân tích RCM/CBM, theo Điều 25, QĐ 197." },
+            { q: "Thế nào là 'Mất điện kéo dài' theo định nghĩa trong quy trình?", options: ["Trên 1 phút", "Trên 3 phút", "Trên 5 phút", "Trên 10 phút"], a: "Trên 5 phút", exp: "Mất điện kéo dài là mất điện với thời gian lớn hơn 05 phút, theo Điều 2, QĐ 197." },
+            { q: "Khi nào phải thay thế cột bê tông cốt thép do bị nứt dọc?", options: ["Nứt rộng 0.3mm, dài 50cm", "Nứt rộng 0.5mm, dài 100cm", "Nứt rộng >0.5mm, dài >200cm", "Mọi trường hợp nứt"], a: "Nứt rộng >0.5mm, dài >200cm", exp: "Vết nứt dọc có chiều rộng khe nứt lớn hơn 0,5 mm và chiều dài khe nứt lớn hơn 200 cm phải thay cột, theo Điều 13, QT.31." },
+            { q: "Độ lệch của chuỗi cách điện đỡ so với phương thẳng đứng không được vượt quá bao nhiêu độ?", options: ["5°", "10°", "15°", "20°"], a: "15°", exp: "Độ lệch chuỗi cách điện đỡ hoặc sứ đứng, so với phương thẳng đứng không quá 15°, theo Điều 14, QT.31." },
+            { q: "Khoảng cách giữa hai biển báo, cột mốc liền kề để đánh dấu tuyến cáp ngầm không được quá bao nhiêu mét?", options: ["10 m", "20 m", "30 m", "50 m"], a: "20 m", exp: "Khoảng cách giữa hai biển báo, cột mốc liền kề không quá 20 m, theo Điều 10, QT.34." },
+            { q: "Việc sửa chữa lớn (SCL) tài sản cố định phải đảm bảo các nguyên tắc nào?", options: ["Nhanh, gọn, rẻ", "Đúng nội dung, đúng tiến độ, đảm bảo chất lượng", "Chỉ sửa khi có sự cố", "Ưu tiên vật tư nhập khẩu"], a: "Đúng nội dung, đúng tiến độ, đảm bảo chất lượng", exp: "Nguyên tắc SCL là đúng nội dung, đúng tiến độ, đảm bảo chất lượng và tuân thủ các quy định hiện hành, theo Điều 45, QĐ 905." },
+            { q: "Thời hạn gửi báo cáo phân tích sự cố lưới điện 110kV là bao lâu?", options: ["24 giờ", "48 giờ", "5 ngày làm việc", "10 ngày làm việc"], a: "10 ngày làm việc", exp: "Không muộn hơn 10 ngày làm việc kể từ khi xảy ra sự cố, theo Điều 18, QĐ 1515." },
+            { q: "Vận hành đầy tải mức 1 (theo dõi) đối với lưới điện 110kV là khi mang tải ở mức nào?", options: ["60-70% Icp", "70-80% Icp", "80-90% Icp", "90-100% Icp"], a: "80-90% Icp", exp: "Mang tải từ 80% đến dưới 90% dòng điện cho phép (Icp), theo Điều 14, QĐ 197." },
+            { q: "Thế nào là sửa chữa bảo dưỡng theo tình trạng thiết bị (CBM)?", options: ["Sửa chữa theo lịch cố định hàng năm", "Sửa chữa khi thiết bị hỏng", "Sửa chữa dựa trên tình trạng kỹ thuật thực tế của thiết bị", "Sửa chữa theo yêu cầu của nhà sản xuất"], a: "Sửa chữa dựa trên tình trạng kỹ thuật thực tế của thiết bị", exp: "CBM là sửa chữa theo tình trạng kỹ thuật thực tế của thiết bị, theo Điều 2, QĐ 905." },
+            { q: "Hệ số an toàn của dây dẫn, dây chống sét ở các khoảng vượt sông, đường sắt không được nhỏ hơn bao nhiêu?", options: ["1.5", "2.0", "2.5", "3.0"], a: "2.5", exp: "Phải đảm bảo hệ số an toàn của dây dẫn điện, dây chống sét không nhỏ hơn 2,5, theo Điều 15, QT.31." },
+            { q: "Biên bản thí nghiệm của MBA mới chưa đưa vào vận hành có hiệu lực trong bao lâu?", options: ["30 ngày", "60 ngày", "90 ngày", "180 ngày"], a: "90 ngày", exp: "Biên bản thí nghiệm có hiệu lực trong 90 ngày kể từ ngày thí nghiệm, theo Điều 34, QT.32." },
+            { q: "Đơn vị QLVH phải thực hiện công tác quản lý hành lang bảo vệ an toàn đường dây theo nghị định nào?", options: ["Nghị định 14/2014/NĐ-CP", "Nghị định 51/2020/NĐ-CP", "Nghị định 62/2025/NĐ-CP", "Nghị định 137/2013/NĐ-CP"], a: "Nghị định 62/2025/NĐ-CP", exp: "Phải thực hiện theo Nghị định 62/2025/NĐ-CP quy định chi tiết thi hành Luật Điện lực, theo Điều 7, QT.31." },
+            { q: "“Sự cố” trong hệ thống điện được định nghĩa như thế nào?", a: "Sự cố là sự kiện một hoặc nhiều trang thiết bị trong hệ thống điện hoạt động không bình thường, gây ngừng cung cấp điện hoặc ảnh hưởng đến việc đảm bảo cung cấp điện an toàn, ổn định, liên tục và chất lượng.", sources: ["Quy định kỹ thuật vận hành EVN"] },
+            { q: "“Mất điện kéo dài” được định nghĩa là mất điện với thời gian bao lâu?", a: "Mất điện kéo dài là tình trạng mất điện với thời gian lớn hơn 05 phút.", sources: ["Quy định kỹ thuật vận hành EVN"] },
+            { q: "“Mất điện thoáng qua” là mất điện với thời gian như thế nào?", a: "Mất điện thoáng qua là tình trạng mất điện với thời gian nhỏ hơn hoặc bằng 05 phút.", sources: ["Quy định kỹ thuật vận hành EVN"] },
+            { q: "Đại tu tài sản cố định được định nghĩa là gì?", a: "Đại tu là công việc bảo dưỡng, sửa chữa định kỳ tổng thể toàn bộ các bộ phận của thiết bị, công trình nhằm khôi phục lại năng lực hoạt động, phòng ngừa sự cố, và đảm bảo vận hành tin cậy, kinh tế đến kỳ đại tu tiếp theo.", sources: ["QĐ 905"] },
+            { q: "Trung tu là gì?", a: "Trung tu là công việc bảo dưỡng, sửa chữa định kỳ nhằm khôi phục lại năng lực hoạt động của một số bộ phận và chi tiết có thời gian làm việc tin cậy ngắn hơn chu kỳ đại tu của thiết bị, công trình.", sources: ["QĐ 905"] },
+            { q: "Sửa chữa bảo dưỡng theo tình trạng thiết bị (CBM) là gì?", a: "CBM là công tác sửa chữa được tiến hành trên cơ sở tình trạng kỹ thuật thực tế của thiết bị, với thời điểm và khối lượng được xác định qua các tiêu chí ảnh hưởng tới Sức khoẻ, An toàn, Môi trường và Vận hành ổn định (HSEO).", sources: ["QĐ 905"] },
+            { q: "Sửa chữa bảo dưỡng theo định kỳ (TBM) là gì?", a: "TBM là công tác sửa chữa theo chu kỳ kế hoạch với hạng mục được quy định sẵn trong tài liệu kỹ thuật hoặc khuyến cáo của nhà chế tạo, không phụ thuộc vào tình trạng kỹ thuật của thiết bị tại thời điểm sửa chữa.", sources: ["QĐ 905"] },
+            { q: "Chu kỳ đại tu đối với đường dây tải điện thông thường là bao lâu?", a: "Chu kỳ đại tu là **6 năm 1 lần**.", sources: ["QĐ 905"] },
+            { q: "Chu kỳ đại tu đối với đường dây tải điện ven biển là bao lâu?", a: "Chu kỳ đại tu là **4 năm 1 lần**.", sources: ["QĐ 905"] },
+            { q: "Thời gian tiêu chuẩn ngừng vận hành để đại tu lò hơi là bao lâu?", a: "Không vượt quá **60 ngày/1 lò hơi**.", sources: ["QĐ 905"] },
+            { q: "Thời gian tiêu chuẩn ngừng vận hành để đại tu tổ máy thủy điện có công suất dưới 200 MW là bao lâu?", a: "Không vượt quá **30 ngày/1 tổ máy**.", sources: ["QĐ 905"] },
+            { q: "Thời gian tiêu chuẩn ngừng vận hành để đại tu tổ máy thủy điện có công suất từ 200 MW trở lên là bao lâu?", a: "Không vượt quá **35 ngày/1 tổ máy**.", sources: ["QĐ 905"] },
+            { q: "Khi lập kế hoạch SCL, các đơn vị phải trình Tổng công ty duyệt Phương án kỹ thuật (PAKT) trước thời điểm nào?", a: "Các đơn vị phải trình Tổng công ty duyệt PAKT **trước ngày 31/5 của năm trước năm kế hoạch (Y-1)**.", sources: ["QĐ 905"] },
+            { q: "Việc điều chỉnh kế hoạch chi phí SCL được thực hiện vào thời điểm nào trong năm?", a: "Thời điểm thực hiện điều chỉnh chi phí SCL là **tháng 8 hàng năm**.", sources: ["QĐ 905"] },
+            { q: "Việc điều hòa kế hoạch chi phí SCL được thực hiện vào thời điểm nào trong năm?", a: "Thời điểm thực hiện điều hòa chi phí SCL là **tháng 12 hàng năm**.", sources: ["QĐ 905"] },
+            { q: "Cán bộ giám sát SCL có quyền yêu cầu tạm ngừng công việc trong trường hợp nào?", a: "Cán bộ giám sát có quyền yêu cầu tạm ngừng khi phát hiện vật tư thay thế không đúng tiêu chuẩn, lắp đặt sai hướng dẫn, công cụ không an toàn, hoặc thi công sai phương án kỹ thuật đã được duyệt.", sources: ["QĐ 905"] },
+            { q: "Thời gian bảo hành đối với thiết bị chính của nhà máy điện, đường dây, trạm biến áp sau sửa chữa lớn là bao lâu?", a: "Thời gian bảo hành là **2160 giờ vận hành thực tế**, nhưng không quá **180 ngày** kể từ ngày nghiệm thu bàn giao đưa vào vận hành thương mại chính thức.", sources: ["Điều 53, QĐ 905"] },
+            { q: "Thời gian bảo hành đối với thiết bị lẻ sau sửa chữa lớn là bao lâu?", a: "Thời gian bảo hành là **720 giờ vận hành thực tế**, nhưng không quá **90 ngày** kể từ ngày nghiệm thu bàn giao.", sources: ["Điều 53, QĐ 905"] },
+            { q: "Giá trị bảo lãnh bảo hành đối với hợp đồng SCL bao gồm cả cung cấp vật tư là bao nhiêu?", a: "Giá trị bảo lãnh bảo hành bằng **5% tổng giá trị ký hợp đồng**.", sources: ["Điều 53, QĐ 905"] },
+            { q: "Thời gian tối đa để đơn vị sửa chữa trong nước bắt đầu khắc phục hư hỏng trong thời gian bảo hành là bao lâu?", a: "Thời gian tối đa là **07 ngày** kể từ ngày phát hành văn bản yêu cầu.", sources: ["Điều 53, QĐ 905"] },
+            { q: "Thời điểm chốt chỉ số công tơ giao nhận điện năng để tính toán tổn thất là khi nào?", a: "Là thời điểm **0h00 ngày 1 hàng tháng**.", sources: ["Quy định tính tổn thất điện năng"] },
+            { q: "Điện tự dùng tại trạm biến áp có được tính vào tổn thất điện năng của lưới điện không?", a: "Có, điện tự dùng tại TBA của lưới truyền tải và phân phối được đo đếm và tính vào tổn thất điện năng của lưới điện.", sources: ["Quy định tính tổn thất điện năng"] },
+            { q: "Chỉ số SAIDI là viết tắt của gì và có ý nghĩa gì?", a: "SAIDI (System Average Interruption Duration Index) là chỉ số về **thời gian mất điện trung bình** của lưới điện phân phối.", sources: ["TCVN 7997"] },
+            { q: "Chỉ số SAIFI là viết tắt của gì và có ý nghĩa gì?", a: "SAIFI (System Average Interruption Frequency Index) là chỉ số về **số lần mất điện trung bình** của lưới điện phân phối.", sources: ["TCVN 7997"] },
+            { q: "Chỉ số MAIFI là viết tắt của gì và có ý nghĩa gì?", a: "MAIFI (Momentary Average Interruption Frequency Index) là chỉ số về **số lần mất điện thoáng qua trung bình** của lưới điện phân phối.", sources: ["TCVN 7997"] },
+            { q: "Vận hành đầy tải mức 2 (cảnh báo) đối với lưới điện từ 110kV trở lên là khi mang tải ở mức nào?", a: "Là khi mang tải từ **90% đến 100% dòng điện cho phép (Icp)**.", sources: ["Quy định vận hành hệ thống điện EVN"] },
+            { q: "Vận hành quá tải mức 2 (cực kỳ khẩn cấp) đối với lưới điện 110kV trở lên là khi nào?", a: "Là khi mang tải từ **110% Icp trở lên**.", sources: ["Quy định vận hành hệ thống điện EVN"] },
+            { q: "Vận hành non tải đối với lưới điện hạ áp là khi nào?", a: "Là khi mang tải ở mức **dưới 30% dòng điện cho phép (Icp)**.", sources: ["Quy định vận hành hệ thống điện EVN"] },
+            { q: "Chế độ báo cáo các chỉ tiêu kỹ thuật được thực hiện bằng hình thức nào là chính?", a: "Tất cả các báo cáo chỉ tiêu kỹ thuật đều thực hiện bằng **hình thức điện tử**.", sources: ["Quy định báo cáo kỹ thuật EVN"] },
+            { q: "Trong vòng bao nhiêu ngày đầu tháng, lãnh đạo các đơn vị phải ký điện tử xác nhận kết quả thực hiện chỉ tiêu kỹ thuật của tháng trước?", a: "Trong vòng **5 ngày đầu của mỗi tháng**.", sources: ["Quy định báo cáo kỹ thuật EVN"] },
+            { q: "Sự cố khách quan trong hệ thống điện được hiểu là gì?", a: "Sự cố khách quan là sự cố xảy ra khi Đơn vị QLVH đã thực hiện đầy đủ nghĩa vụ, trách nhiệm và biện pháp phòng ngừa theo quy định nhưng vẫn không ngăn chặn được sự cố, thường do thiên tai, địch họa hoặc nguyên nhân bên ngoài.", sources: ['Điều 12, QĐ 1515'] },
+            { q: "Những nguyên nhân nào được xem là sự cố khách quan do thiên tai?", a: "Bao gồm: bão, áp thấp nhiệt đới, lốc, sét, mưa lớn, lũ, lũ quét, ngập lụt, sạt lở đất và các loại thiên tai khác.", sources: ['Điều 12, QĐ 1515'] },
+            { q: "Những nguyên nhân nào được xem là sự cố khách quan do tổ chức hoặc cá nhân bên ngoài?", a: "Gồm: lỗi thiết kế, chế tạo, xây dựng, vận chuyển, lắp đặt, chỉnh định, sửa chữa; do ném vật thể, thả diều, cháy rừng, nổ mìn, khai thác cát, phương tiện giao thông va chạm, vi phạm hành lang an toàn lưới điện cao áp.", sources: ['Điều 12, QĐ 1515'] },
+            { q: "Sự cố chủ quan trong hệ thống điện là gì?", a: "Sự cố xảy ra do lỗi từ phía con người trong quản lý, điều hành, bảo dưỡng, vận hành hoặc do không tuân thủ quy định kỹ thuật, quy trình an toàn, đào tạo, giám sát.", sources: ['Điều 13, QĐ 1515'] },
+            { q: "Ai chịu trách nhiệm điều tra sự cố cấp 2, cấp 3 đối với lưới 110kV, 220kV?", a: "Công ty Điện lực chịu trách nhiệm điều tra sự cố cấp 2, cấp 3 đối với đường dây, trạm 110kV, 220kV, nhà máy điện, hoặc sự cố trung áp có hư hỏng vật tư thiết bị chính, cháy nổ, tai nạn trong nhân dân.", sources: ['Điều 10, QĐ 1515'] },
+            { q: "Ai chịu trách nhiệm điều tra sự cố trên đường dây trung áp của Đội quản lý điện lực khu vực?", a: "Đội quản lý điện lực khu vực chịu trách nhiệm điều tra sự cố cấp 3 đối với lưới điện trung áp và phần tử, thiết bị hạ áp của MBA.", sources: ['Điều 10, QĐ 1515'] },
+            { q: "Đơn vị cấp trên có được tổ chức điều tra lại sự cố của đơn vị cấp dưới không?", a: "Có. Đơn vị cấp trên có quyền tổ chức điều tra lại bất kỳ sự cố nào khi không đồng ý với kết luận điều tra của đơn vị cấp dưới hoặc khi có ý kiến khác từ đơn vị thiết kế, chế tạo.", sources: ['Điều 10, QĐ 1515'] },
+            { q: "Đơn vị không cung cấp đủ hồ sơ phục vụ điều tra sự cố sẽ bị xử lý như thế nào?", a: "Đơn vị không cung cấp đủ hồ sơ theo yêu cầu trong 48 giờ kể từ khi nhận thông báo sẽ bị xử lý vi phạm theo quy chế quản lý nội bộ EVNNPC.", sources: ['Điều 24, QĐ 1515'] },
+            { q: "Thời hạn gửi Báo cáo sự cố là bao lâu kể từ khi xảy ra sự cố?", a: "Không muộn hơn 48 giờ kể từ khi xảy ra sự cố, đơn vị phải gửi Báo cáo sự cố về cấp trên theo phân cấp.", sources: ['Điều 17, QĐ 1515'] },
+            { q: "Thời hạn gửi Báo cáo phân tích sự cố đối với lưới 110kV, 220kV là bao lâu?", a: "Không muộn hơn 10 ngày làm việc kể từ khi xảy ra sự cố.", sources: ['Điều 18, QĐ 1515'] },
+            { q: "Báo cáo sự cố gồm những nội dung chính nào?", a: "Báo cáo sự cố phải nêu rõ: thời điểm, địa điểm, thiết bị bị sự cố, tình trạng vận hành trước sự cố, diễn biến, nguyên nhân sơ bộ, thiệt hại, biện pháp xử lý và kiến nghị.", sources: ['Điều 17, QĐ 1515'] },
+            { q: "Báo cáo phân tích sự cố đối với lưới 35kV trở xuống được thực hiện vào thời điểm nào?", a: "Trước ngày 10 hàng tháng, các đơn vị tổ chức họp phân tích sự cố của tháng trước.", sources: ['Điều 18, QĐ 1515'] },
+            { q: "Báo cáo nhanh sự cố phải được gửi trong thời gian bao lâu?", a: "Ngay sau khi cô lập phần tử bị sự cố và khắc phục tạm thời tình trạng vận hành, nhân viên vận hành phải gửi Báo cáo nhanh sự cố.", sources: ['Điều 17, QĐ 1515'] },
+            { q: "Cấp điều độ có quyền điều khiển có trách nhiệm gì khi xảy ra sự cố?", a: "Phải thu thập thông tin, phối hợp với đơn vị QLVH phân tích nguyên nhân, đánh giá mức độ tin cậy và an toàn của thiết bị, bảo vệ, rơle và tự động.", sources: ['Điều 15, QĐ 1515'] },
+            { q: "Những thông tin nào phải được thu thập khi xảy ra sự cố?", a: "Bao gồm: thời điểm, tình trạng thiết bị, thông số vận hành, điều kiện thời tiết, chế độ kết dây, các thao tác, diễn biến và hình ảnh hiện trường.", sources: ['Điều 14, QĐ 1515'] },
+            { q: "Đơn vị cấp trên cần xử lý thế nào khi không đồng ý với kết luận điều tra của cấp dưới?", a: "Được quyền tổ chức điều tra lại; nếu đơn vị cấp dưới không thống nhất có thể bảo lưu ý kiến trong biên bản và khiếu nại trong 10 ngày làm việc.", sources: ['Điều 10, QĐ 1515'] },
+            { q: "Các biện pháp an toàn nào cần thực hiện khi xác định chỗ hư hỏng trên đường cáp ngầm?", a: "Phải cắt điện, treo biển báo, nối đất an toàn hai đầu, kiểm tra không có điện trước khi thao tác, đảm bảo khoảng cách và rào chắn.", sources: ['Điều 14, EVNNPC.KT/QT.34'] },
+            { q: "Tỷ lệ tổn thất điện năng (TTĐN) trên lưới điện của EVNNPC được tính như thế nào?", a: "Tỉ lệ TTĐN (%) = (Điện năng tổn thất / (Điện năng nhận - điện năng giao không gây tổn thất)) x 100.", sources: ['Điều 50, QĐ 197'] },
+            { q: "Chế độ báo cáo chỉ tiêu kỹ thuật của các đơn vị trong EVNNPC được thực hiện bằng hình thức nào?", a: "Tất cả các báo cáo chỉ tiêu kỹ thuật đều thực hiện bằng **hình thức điện tử**, dữ liệu cập nhật tự động từ phần mềm quản lý.", sources: ['Điều 51, QĐ 197'] },
+            { q: "Đơn vị phải cập nhật dữ liệu về tình hình sự cố vào thời điểm nào?", a: "Chậm nhất 9h00 hàng ngày, các Công ty Điện lực cập nhật đầy đủ dữ liệu ngày hôm trước vào hệ thống quản lý.", sources: ['Điều 51, QĐ 197'] },
+            { q: "Những yếu tố nào cần ghi trong hồ sơ điều tra sự cố?", a: "Bao gồm: báo cáo sự cố, biên bản hiện trường, ảnh chụp, tường trình, phiếu thí nghiệm, nhật ký vận hành, hồ sơ tai nạn (nếu có).", sources: ['Điều 23, QĐ 1515'] },
+            { q: "Trưởng đoàn điều tra sự cố có trách nhiệm gì?", a: "Phải kết luận nguyên nhân, đề xuất giải pháp khắc phục, xác định trách nhiệm tập thể, cá nhân và công bố biên bản điều tra.", sources: ['Điều 24, QĐ 1515'] },
+            { q: "Khi nào được phép không tổ chức điều tra sự cố?", a: "Khi báo cáo phân tích sự cố đã làm rõ nguyên nhân và đề ra giải pháp phòng ngừa sự cố lặp lại.", sources: ['Điều 10, QĐ 1515'] },
+            { q: "Báo cáo phân tích sự cố được gửi bằng hình thức nào?", a: "Gửi qua hệ thống Digital Office theo quy định của EVNNPC.", sources: ['Điều 18, QĐ 1515'] },
+            { q: "Ai chịu trách nhiệm điều tra sự cố tại nhà máy thủy điện trực thuộc EVNNPC?", a: "Đơn vị quản lý nhà máy thủy điện chịu trách nhiệm điều tra sự cố trong phạm vi quản lý.", sources: ['Điều 10, QĐ 1515'] },
+            { q: "Thời gian hoàn thành điều tra sự cố do đoàn điều tra thực hiện là bao lâu?", a: "Trong vòng 10 ngày làm việc kể từ ngày sự cố xảy ra, trừ trường hợp đặc biệt được gia hạn theo quy định.", sources: ['Điều 24, QĐ 1515'] },
+            { q: "Khi điều tra sự cố, đoàn điều tra phải lập những loại biên bản nào?", a: "Phải lập biên bản hiện trường, biên bản lấy lời khai, biên bản kết luận điều tra, kèm hình ảnh và các tài liệu liên quan.", sources: ['Điều 23, QĐ 1515'] },
+            { q: "Khi nào phải báo cáo EVNNPC về sự cố đặc biệt nghiêm trọng?", a: "Ngay sau khi xảy ra sự cố gây mất an toàn, thiệt hại lớn hoặc có nguy cơ ảnh hưởng uy tín EVNNPC, đơn vị phải báo cáo ngay bằng điện thoại và văn bản.", sources: ['Điều 9, QĐ 1515'] },
+            { q: "Ai có quyền thành lập đoàn điều tra sự cố cấp EVNNPC?", a: "Tổng giám đốc EVNNPC hoặc người được ủy quyền ra quyết định thành lập đoàn điều tra khi cần thiết.", sources: ['Điều 10, QĐ 1515'] },
+            { q: "Đoàn điều tra sự cố cấp EVNNPC gồm những thành phần nào?", a: "Gồm đại diện Ban Kỹ thuật EVNNPC, an toàn, điều độ, đơn vị quản lý vận hành, và đơn vị liên quan khác.", sources: ['Điều 11, QĐ 1515'] },
+            { q: "Các sự cố gây cháy nổ, thiệt hại vật chất lớn phải được xử lý thế nào?", a: "Phải cô lập khu vực, báo cáo cơ quan chức năng, lập biên bản hiện trường, chụp ảnh và bảo quản chứng cứ.", sources: ['Điều 20, QĐ 1515'] },
+            { q: "Trách nhiệm của trưởng đơn vị khi xảy ra sự cố là gì?", a: "Phải tổ chức điều tra sơ bộ, xác định nguyên nhân ban đầu, báo cáo cấp trên, chỉ đạo khắc phục và đề xuất biện pháp phòng ngừa.", sources: ['Điều 16, QĐ 1515'] },
+            { q: "Khi xảy ra sự cố có tai nạn lao động, ai là người phải báo cáo?", a: "Người phụ trách hiện trường hoặc ca trưởng phải báo cáo ngay cho cấp trên trực tiếp và đơn vị an toàn.", sources: ['Điều 19, QĐ 1515'] },
+            { q: "Đơn vị quản lý kỹ thuật phải thực hiện công tác quản lý tài sản thiết bị theo nguyên tắc nào?", a: "Phải đảm bảo đầy đủ hồ sơ kỹ thuật, nhật ký vận hành, lý lịch thiết bị và quản lý đồng bộ trên phần mềm quản lý kỹ thuật.", sources: ['Điều 25, QĐ 197'] },
+            { q: "Mỗi thiết bị điện trong EVNNPC phải có những hồ sơ kỹ thuật nào?", a: "Gồm lý lịch thiết bị, bản vẽ thiết kế, biên bản nghiệm thu, kết quả thí nghiệm, nhật ký vận hành và hồ sơ sửa chữa, bảo dưỡng.", sources: ['Điều 26, QĐ 197'] },
+            { q: "Các đơn vị có trách nhiệm báo cáo tình hình vận hành thiết bị định kỳ ra sao?", a: "Phải báo cáo định kỳ hàng tháng và đột xuất khi có yêu cầu của EVNNPC.", sources: ['Điều 50, QĐ 197'] },
+            { q: "Trách nhiệm của đơn vị trong việc cập nhật dữ liệu kỹ thuật lên phần mềm dùng chung là gì?", a: "Phải đảm bảo thông tin chính xác, kịp thời, phản ánh đúng hiện trạng thiết bị và lưới điện.", sources: ['Điều 51, QĐ 197'] },
+            { q: "Công tác bảo dưỡng, sửa chữa theo CBM yêu cầu gì về dữ liệu thiết bị?", a: "Phải lưu trữ và phân tích dữ liệu vận hành thực tế để đưa ra kế hoạch bảo dưỡng tối ưu.", sources: ['Điều 43, QĐ 197'] },
+            { q: "Khi thay thế thiết bị, đơn vị phải thực hiện những công việc gì?", a: "Phải cập nhật thông tin thay thế vào lý lịch thiết bị, báo cáo về Ban Kỹ thuật và lưu hồ sơ tại đơn vị.", sources: ['Điều 30, QĐ 197'] },
+            { q: "Khi thiết bị bị hư hỏng nặng, việc xử lý được thực hiện như thế nào?", a: "Phải đánh giá hiện trạng, lập biên bản, đề xuất phương án sửa chữa hoặc thay thế trình EVNNPC phê duyệt.", sources: ['Điều 31, QĐ 197'] },
+            { q: "Đơn vị được phép tự ý thay đổi kết cấu kỹ thuật của thiết bị hay không?", a: "Không. Mọi thay đổi kết cấu, tính năng thiết bị phải được EVNNPC chấp thuận.", sources: ['Điều 32, QĐ 197'] },
+            { q: "Hồ sơ lý lịch thiết bị phải được cập nhật trong trường hợp nào?", a: "Mỗi khi thiết bị có thay đổi tình trạng vận hành, sửa chữa, thay thế hoặc kiểm định.", sources: ['Điều 26, QĐ 197'] },
+            { q: "Khi có thiết bị mới đưa vào vận hành, hồ sơ kỹ thuật cần hoàn thiện trong bao lâu?", a: "Không quá 15 ngày kể từ ngày nghiệm thu đóng điện.", sources: ['Điều 29, QĐ 197'] },
+            { q: "Công tác phân tích sự cố trong EVNNPC được tổ chức với tần suất thế nào?", a: "Được tổ chức định kỳ hàng tháng và tổng hợp quý, năm để rút kinh nghiệm vận hành.", sources: ['Điều 18, QĐ 1515'] },
+            { q: "Khi phát hiện thiết bị có dấu hiệu bất thường, đơn vị QLVH phải làm gì?", a: "Phải ghi chép nhật ký, thông báo điều độ, đánh giá tình trạng và lập kế hoạch kiểm tra, xử lý ngay.", sources: ['Điều 19, QĐ 197'] },
+            { q: "Công tác giám sát kỹ thuật của Ban Kỹ thuật EVNNPC bao gồm những nội dung gì?", a: "Gồm giám sát tình trạng thiết bị, chỉ tiêu vận hành, sự cố, công tác bảo dưỡng và công tác thí nghiệm định kỳ.", sources: ['Điều 38, QĐ 197'] },
+            { q: "Công tác kiểm tra kỹ thuật định kỳ tại đơn vị cấp dưới được thực hiện với tần suất nào?", a: "Ít nhất 2 lần/năm hoặc đột xuất khi có yêu cầu của EVNNPC.", sources: ['Điều 39, QĐ 197'] },
+            { q: "Những đơn vị nào phải tham gia phân tích sự cố cấp EVNNPC?", a: "Gồm Ban Kỹ thuật, An toàn, Điều độ và các Công ty Điện lực có phần tử liên quan đến sự cố.", sources: ['Điều 11, QĐ 1515'] },
+            { q: "Khi sự cố có liên quan đến thiết bị do đơn vị khác chế tạo, cần phối hợp với ai?", a: "Phải mời đại diện nhà chế tạo, thiết kế, thi công hoặc đơn vị bảo hành tham gia đoàn điều tra.", sources: ['Điều 11, QĐ 1515'] },
+            { q: "Công tác thống kê sự cố được tổng hợp theo định kỳ nào?", a: "Theo tháng, quý và năm, cập nhật vào hệ thống dữ liệu sự cố EVNNPC.", sources: ['Điều 18, QĐ 1515'] },
+            { q: "Các chỉ tiêu kỹ thuật quan trọng nào cần theo dõi trong quản lý kỹ thuật EVNNPC?", a: "Bao gồm SAIDI, SAIFI, MAIFI, tổn thất điện năng, độ tin cậy vận hành và hệ số sự cố.", sources: ['Điều 51, QĐ 197'] },
+            { q: "Khi sự cố gây thiệt hại tài sản, cần báo cáo ai?", a: "Phải báo cáo ngay cho EVNNPC và cơ quan quản lý cấp trên có thẩm quyền.", sources: ['Điều 20, QĐ 1515'] },
+            { q: "Tài liệu điều tra sự cố phải được lưu trữ trong bao lâu?", a: "Tối thiểu 5 năm kể từ ngày sự cố được kết luận.", sources: ['Điều 25, QĐ 1515'] },
+            { q: "Khi phát hiện vi phạm quy trình vận hành gây sự cố, cần xử lý ra sao?", a: "Phải lập biên bản, xác định trách nhiệm và xử lý kỷ luật theo quy định nội bộ của EVNNPC.", sources: ['Điều 27, QĐ 1515'] },
+            { q: "Khi nào cần thành lập đoàn điều tra liên ngành?", a: "Khi sự cố nghiêm trọng có liên quan nhiều đơn vị hoặc ảnh hưởng lớn đến hệ thống điện miền Bắc.", sources: ['Điều 11, QĐ 1515'] },
+            { q: "Các nội dung chính trong biên bản kết luận điều tra sự cố gồm những gì?", a: "Nguyên nhân, mức độ thiệt hại, trách nhiệm, kiến nghị xử lý và biện pháp phòng ngừa tái diễn.", sources: ['Điều 24, QĐ 1515'] },
+            { q: "Những thiết bị nào thuộc diện phải cập nhật dữ liệu CBM?", a: "Các thiết bị quan trọng có nguy cơ sự cố cao như MBA, máy cắt, dao cách ly, cáp ngầm, TBA.", sources: ['Điều 43, QĐ 197'] },
+            { q: "Hệ thống phần mềm kỹ thuật của EVNNPC được quy định sử dụng thế nào?", a: "Các đơn vị phải sử dụng thống nhất phần mềm quản lý kỹ thuật theo hướng dẫn EVNNPC, không tự phát triển riêng.", sources: ['Điều 51, QĐ 197'] },
+            { q: "Trách nhiệm của Công ty Điện lực khi sự cố xảy ra trên địa bàn quản lý là gì?", a: "Phải nhanh chóng cô lập sự cố, khôi phục cấp điện, báo cáo và phối hợp điều tra theo quy định.", sources: ['Điều 15, QĐ 1515'] },
+            { q: "Các loại sự cố nào được thống kê riêng trong báo cáo EVNNPC?", a: "Gồm sự cố do thiên tai, sự cố do vi phạm hành lang, sự cố do thiết bị và sự cố do vận hành sai.", sources: ['Điều 12, QĐ 1515'] },
+            { q: "Công tác bảo dưỡng thiết bị theo TBM được quy định như thế nào?", a: "Thực hiện theo chu kỳ kế hoạch, dựa trên tài liệu kỹ thuật hoặc khuyến cáo của nhà chế tạo.", sources: ['Điều 44, QĐ 197'] },
+            { q: "Thiết bị phải được thí nghiệm định kỳ theo thời gian bao lâu?", a: "Theo chu kỳ quy định của nhà chế tạo hoặc quy định EVNNPC, tối thiểu 1 lần/năm với thiết bị chính.", sources: ['Điều 45, QĐ 197'] },
+            { q: "Đơn vị phải lưu nhật ký vận hành theo hình thức nào?", a: "Lưu trên phần mềm quản lý vận hành và bản in tại hiện trường để kiểm tra khi cần.", sources: ['Điều 50, QĐ 197'] },
+            { q: "Các chỉ tiêu kỹ thuật hàng tháng cần được ký duyệt trong bao lâu?", a: "Trong vòng 5 ngày đầu của tháng kế tiếp.", sources: ['Điều 51, QĐ 197'] },
+            { q: "Những yếu tố nào được xem là lỗi chủ quan dẫn đến sự cố?", a: "Bao gồm thao tác sai quy trình, bảo dưỡng không đầy đủ, không kiểm tra định kỳ, thiếu giám sát an toàn.", sources: ['Điều 13, QĐ 1515'] },
+            { q: "Sự cố lặp lại cùng nguyên nhân phải được xử lý thế nào?", a: "Phải lập biên bản riêng, xác định nguyên nhân gốc và đề xuất biện pháp triệt để khắc phục.", sources: ['Điều 27, QĐ 1515'] },
+            { q: "Ai phê duyệt biện pháp khắc phục sự cố có chi phí lớn?", a: "EVNNPC phê duyệt khi chi phí vượt thẩm quyền của đơn vị quản lý trực tiếp.", sources: ['Điều 24, QĐ 1515'] },
+            { q: "Các thiết bị đo ghi sự cố phải được quản lý ra sao?", a: "Phải kiểm định định kỳ, lưu giữ dữ liệu gốc tối thiểu 12 tháng để phục vụ điều tra.", sources: ['Điều 15, QĐ 1515'] },
+            { q: "Trường hợp mất điện diện rộng, công tác khôi phục được ưu tiên thế nào?", a: "Ưu tiên cấp điện cho phụ tải quan trọng, trạm bơm, bệnh viện, cơ quan hành chính.", sources: ['Điều 16, QĐ 1515'] },
+            { q: "Công tác phân tích sự cố toàn Tổng công ty được tổng hợp theo định kỳ nào?", a: "Theo quý và năm, do Ban Kỹ thuật chủ trì tổng hợp và báo cáo Hội đồng thành viên.", sources: ['Điều 18, QĐ 1515'] },
+            { q: "Những sự cố gây ảnh hưởng truyền thông phải báo cáo trong bao lâu?", a: "Trong vòng 2 giờ kể từ khi xảy ra, phải báo cáo nhanh cho EVNNPC.", sources: ['Điều 9, QĐ 1515'] },
+            { q: "Khi có sự cố nghiêm trọng, ai được phép phát ngôn ra bên ngoài?", a: "Chỉ người phát ngôn được EVNNPC ủy quyền mới được cung cấp thông tin cho báo chí.", sources: ['Điều 10, QĐ 1515'] },
+            ];
+        
+        // --- LÔGIC CHUNG ---
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const totalQaCount = [...new Set(qaData.map(item => item.q))].length;
+        const totalQuizQuestions = [...new Set(questionBank.map(item => item.q))].length;
+
+        function addMessage(type, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message-bubble ${type}-message`;
+            messageDiv.innerHTML = content.replace(/\n/g, '<br>'); // Replace newlines with <br>
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showWelcomeMessage() {
+            userInput.disabled = false;
+            sendBtn.disabled = false;
+            userInput.focus();
+            addMessage('bot', `Tuyệt vời! Tôi đã sẵn sàng với kho dữ liệu **${totalQaCount}+ câu hỏi**. Bạn có thể hỏi tôi bất kỳ câu hỏi nào hoặc thử chế độ **Học Nhanh** và **Thi trắc nghiệm** nhé!`);
+        }
+
+        function sendMessage() {
+            const userText = userInput.value.trim();
+            if (userText === '') return;
+
+            addMessage('user', userText);
+            userInput.value = '';
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+            
+            const loadingMessage = document.createElement('div');
+            loadingMessage.className = 'message-bubble bot-message';
+            loadingMessage.id = 'loading-message';
+            loadingMessage.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Đang tìm kiếm...';
+            chatMessages.appendChild(loadingMessage);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            setTimeout(() => {
+                const normalizedQuery = userText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "");
+                let botResponse = '';
+                let sources = [];
+                
+                const foundItems = qaData.filter(item => {
+                    const normalizedQ = item.q.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "");
+                    return normalizedQ.includes(normalizedQuery);
+                });
+
+                if (foundItems.length > 0) {
+                    botResponse = foundItems.map(item => `**Câu hỏi:** ${item.q}<br>**Trả lời:** ${item.a}<div class="source">**Nguồn:** ${item.sources.join(', ')}</div>`).join('<hr class="my-3">');
+                } else {
+                    botResponse = `Tôi đã cố gắng tìm kiếm nhưng không tìm thấy câu trả lời chính xác. Hiện tôi có hơn **${totalQaCount}** câu hỏi trong cơ sở dữ liệu. Vui lòng thử một cụm từ khác hoặc kiểm tra lại mục **Học Nhanh** nhé.`;
+                }
+                
+                const loadingMessageEl = document.getElementById('loading-message');
+                if (loadingMessageEl) {
+                    loadingMessageEl.remove();
+                }
+
+                addMessage('bot', botResponse);
+                
+                userInput.disabled = false;
+                sendBtn.disabled = false;
+                userInput.focus();
+            }, 1000);
+        }
+
+        userInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // --- CHỨC NĂNG 1: HỌC NHANH (QUICK LEARN) ---
+        function toggleAnswer(element, index) {
+            const answerContainer = element.querySelector('.qa-answer-container');
+            const toggleIcon = element.querySelector('.qa-toggle-icon');
+
+            if (answerContainer.classList.contains('active')) {
+                answerContainer.classList.remove('active');
+                answerContainer.style.maxHeight = '0';
+                toggleIcon.classList.remove('fa-chevron-up');
+                toggleIcon.classList.add('fa-chevron-down');
+            } else {
+                answerContainer.classList.add('active');
+                answerContainer.style.maxHeight = answerContainer.scrollHeight + "px";
+                toggleIcon.classList.remove('fa-chevron-down');
+                toggleIcon.classList.add('fa-chevron-up');
+            }
+        }
+
+        function openQuickLearnModal() {
+            const modal = document.getElementById('main-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            document.getElementById('quiz-footer').classList.add('hidden');
+
+            modalTitle.textContent = `Học Nhanh: Toàn bộ ${totalQaCount}+ Câu hỏi & Trả lời`;
+            modalBody.innerHTML = ''; 
+
+            qaData.forEach((item, index) => {
+                const qaItem = document.createElement('div');
+                qaItem.className = 'qa-item';
+                qaItem.onclick = () => toggleAnswer(qaItem, index);
+                
+                qaItem.innerHTML = `
+                    <div class="qa-question">
+                        <i class="fas fa-chevron-down qa-toggle-icon"></i>
+                        **Câu ${index + 1}:** ${item.q}
+                    </div>
+                    <div class="qa-answer-container">
+                        <div class="qa-answer">${item.a}</div>
+                        <div class="qa-source">*Nguồn: ${item.sources.join(', ')}*</div>
+                    </div>
+                `;
+                modalBody.appendChild(qaItem);
+            });
+            modal.style.display = 'flex';
+        }
+
+        // --- CHỨC NĂNG 2: THI TRẮC NGHIỆM (QUIZ) ---
+        let currentQuizQuestions = [];
+        let userAnswers = {};
+        const NUM_QUESTIONS_PER_QUIZ = 10;
+        const NUM_QUIZZES = 5;
+
+        function openQuizSelectionModal() {
+            const modal = document.getElementById('main-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            document.getElementById('quiz-footer').classList.add('hidden');
+
+            modalTitle.textContent = 'Chọn Đề Thi Trắc Nghiệm';
+            modalBody.innerHTML = `
+                <p class="text-gray-600 mb-4">Mỗi đề thi gồm **${NUM_QUESTIONS_PER_QUIZ} câu hỏi** được chọn ngẫu nhiên từ bộ ${totalQuizQuestions}+ câu hỏi. Các câu hỏi trong một đề thi sẽ không bị trùng lặp.</p>
+                <div id="quiz-selection-list" class="grid grid-cols-2 gap-4">
+                </div>
+            `;
+            const selectionList = document.getElementById('quiz-selection-list');
+            for (let i = 1; i <= NUM_QUIZZES; i++) {
+                const button = document.createElement('button');
+                button.className = 'quick-action-btn bg-blue-500 hover:bg-blue-600 text-white border-none';
+                button.textContent = `Làm Đề Thi Số ${i}`;
+                button.onclick = () => startQuiz(i);
+                selectionList.appendChild(button);
+            }
+            modal.style.display = 'flex';
+        }
+
+        function startQuiz(quizId) {
+            // Loại bỏ câu hỏi trùng lặp từ questionBank trước khi xáo trộn
+            const uniqueQuestions = [...new Map(questionBank.map(item => [item.q, item])).values()];
+            currentQuizQuestions = shuffleArray(uniqueQuestions).slice(0, NUM_QUESTIONS_PER_QUIZ);
+            userAnswers = {};
+
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            modalTitle.textContent = `Thi Trắc Nghiệm: Đề Số ${quizId} (${NUM_QUESTIONS_PER_QUIZ} câu)`;
+            modalBody.innerHTML = '';
+            
+            currentQuizQuestions.forEach((q, index) => {
+                const questionElement = document.createElement('div');
+                questionElement.className = 'quiz-question';
+                questionElement.id = `q-${index}`;
+                
+                const questionText = document.createElement('div');
+                questionText.className = 'question-text';
+                questionText.innerHTML = `**Câu ${index + 1}:** ${q.q}`;
+                questionElement.appendChild(questionText);
+
+                const optionsContainer = document.createElement('div');
+                optionsContainer.id = `options-${index}`;
+
+                // Trộn ngẫu nhiên các phương án trả lời
+                const allOptions = shuffleArray([...q.options]);
+
+                allOptions.forEach((option, optIndex) => {
+                    const optionElement = document.createElement('div');
+                    optionElement.className = 'quiz-option';
+                    optionElement.innerHTML = `<span class="option-icon">${String.fromCharCode(65 + optIndex)}.</span><span class="option-label">${option}</span>`;
+                    optionElement.onclick = () => selectOption(index, option, optionElement);
+                    optionsContainer.appendChild(optionElement);
+                });
+
+                questionElement.appendChild(optionsContainer);
+                modalBody.appendChild(questionElement);
+            });
+
+            document.getElementById('quiz-footer').classList.remove('hidden');
+        }
+
+        function selectOption(qIndex, selectedAnswer, optionElement) {
+            if (userAnswers[qIndex] !== undefined) return;
+
+            const question = currentQuizQuestions[qIndex];
+            const isCorrect = selectedAnswer === question.a;
+            
+            userAnswers[qIndex] = {
+                question: question.q,
+                selected: selectedAnswer,
+                correct: question.a,
+                isCorrect: isCorrect,
+                explanation: question.exp || 'Không có chú giải.'
+            };
+
+            optionElement.classList.add(isCorrect ? 'correct' : 'incorrect');
+            
+            if (!isCorrect) {
+                const optionsContainer = document.getElementById(`options-${qIndex}`);
+                Array.from(optionsContainer.children).forEach(opt => {
+                    if (opt.querySelector('.option-label').textContent === question.a) {
+                        opt.classList.add('correct');
+                    }
+                });
+            }
+
+            const explanationDiv = document.createElement('div');
+            explanationDiv.className = 'explanation';
+            explanationDiv.innerHTML = `
+                <i class="fas fa-info-circle mr-2"></i> 
+                ${isCorrect ? 'Chúc mừng! Đáp án đúng.' : 'Đáp án sai.'} 
+                ${question.exp ? `<br>**Chú giải:** ${question.exp}` : ''}
+            `;
+            document.getElementById(`q-${qIndex}`).appendChild(explanationDiv);
+            
+            Array.from(optionElement.parentNode.children).forEach(opt => {
+                opt.classList.add('disabled');
+            });
+        }
+        
+        function finishQuiz() {
+            const totalAnswered = Object.keys(userAnswers).length;
+            const totalCorrect = Object.values(userAnswers).filter(a => a.isCorrect).length;
+            const score = (totalCorrect / NUM_QUESTIONS_PER_QUIZ) * 100;
+
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            document.getElementById('quiz-footer').classList.add('hidden');
+
+            modalBody.innerHTML = `
+                <div class="result-summary">
+                    <h3>KẾT THÚC BÀI THI</h3>
+                    <p>Số câu trả lời đúng: **${totalCorrect}/${NUM_QUESTIONS_PER_QUIZ}**</p>
+                    <p>Điểm số: **${score.toFixed(0)}/100**</p>
+                    <p style="margin-top: 15px; font-size: 1rem; font-style: italic;">${getEvaluation(score)}</p>
+                    <button class="quick-action-btn" style="margin-top: 20px; background: var(--evn-blue); color: white; border: none; padding: 10px 20px; border-radius: 8px;" onclick="showReview()">
+                        <i class="fas fa-eye mr-2"></i> XEM LẠI BÀI THI
+                    </button>
+                    <button class="quick-action-btn" style="margin-top: 20px; background: #ccc; color: #1f2937; border: none; padding: 10px 20px; border-radius: 8px; margin-left: 10px;" onclick="openQuizSelectionModal()">
+                        <i class="fas fa-redo mr-2"></i> LÀM ĐỀ KHÁC
+                    </button>
+                </div>
+                <div id="quiz-review-details"></div>
+            `;
+        }
+        
+        function getEvaluation(score) {
+            if (score >= 90) return "Xuất sắc! Kiến thức rất vững vàng.";
+            if (score >= 70) return "Tốt! Cần ôn luyện thêm một chút.";
+            if (score >= 50) return "Đạt yêu cầu. Hãy xem lại các câu trả lời sai.";
+            return "Chưa đạt. Cần ôn luyện nghiêm túc hơn.";
+        }
+        
+        function showReview() {
+            const reviewDetails = document.getElementById('quiz-review-details');
+            reviewDetails.innerHTML = '<h3 class="modal-title" style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 20px;">Chi Tiết Bài Thi Đã Làm</h3>';
+            
+            currentQuizQuestions.forEach((q, index) => {
+                const userAnswer = userAnswers[index];
+                const reviewItem = document.createElement('div');
+                reviewItem.className = 'quiz-question';
+                
+                let answerStatus = 'Chưa trả lời';
+                let selectedAnsText = 'N/A';
+                let correctAnsText = q.a;
+                let statusColor = '#9ca3af';
+
+                if (userAnswer) {
+                    selectedAnsText = userAnswer.selected;
+                    if (userAnswer.isCorrect) {
+                        answerStatus = 'ĐÚNG';
+                        statusColor = 'var(--green-correct)';
+                    } else {
+                        answerStatus = 'SAI';
+                        statusColor = 'var(--red-incorrect)';
+                    }
+                }
+
+                reviewItem.innerHTML = `
+                    <div class="question-text" style="border-bottom: 1px dashed #ccc; padding-bottom: 5px;">
+                        **Câu ${index + 1}:** ${q.q} 
+                        <span style="float: right; color: ${statusColor}; font-weight: 700;">[${answerStatus}]</span>
+                    </div>
+                    <p style="margin-top: 10px;">- **Đáp án của bạn:** <span style="font-weight: 600; color: ${userAnswer && userAnswer.isCorrect ? 'var(--green-correct)' : 'var(--red-incorrect)'};">${selectedAnsText}</span></p>
+                    <p>- **Đáp án đúng:** <span style="font-weight: 600; color: var(--green-correct);">${correctAnsText}</span></p>
+                    <div class="explanation" style="background: #f0fdf4; border-left: 3px solid var(--evn-blue);">
+                        **Chú giải:** ${q.exp || 'Không có chú giải.'}
+                    </div>
+                `;
+                reviewDetails.appendChild(reviewItem);
+            });
+        }
+        
+        // --- CÁC HÀM HỖ TRỢ ---
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function closeModal() {
+            document.getElementById('main-modal').style.display = 'none';
+        }
+        
+    </script>
+</body>
+</html>
